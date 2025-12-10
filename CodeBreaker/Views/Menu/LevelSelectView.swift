@@ -18,7 +18,10 @@ struct LevelSelectView: View {
             VStack(spacing: 0) {
                 // Header
                 HStack {
-                    Button(action: { dismiss() }) {
+                    Button(action: {
+                        HapticManager.shared.navigate()
+                        dismiss()
+                    }) {
                         Image(systemName: "chevron.left")
                             .font(.title2.weight(.semibold))
                             .foregroundColor(.white)
@@ -55,6 +58,8 @@ struct LevelSelectView: View {
                                         selectedTier = tier
                                     }
                                     HapticManager.shared.selection()
+                                } else {
+                                    HapticManager.shared.lockedItemTap()
                                 }
                             }
                         }
@@ -78,10 +83,19 @@ struct LevelSelectView: View {
                         GridItem(.flexible())
                     ], spacing: 12) {
                         ForEach(gameManager.levels(for: selectedTier)) { level in
-                            NavigationLink(destination: GameView(tier: level.tier, level: level)) {
+                            if level.isUnlocked {
+                                NavigationLink(destination: GameView(tier: level.tier, level: level)) {
+                                    LevelCell(level: level)
+                                }
+                                .simultaneousGesture(TapGesture().onEnded {
+                                    HapticManager.shared.primaryButtonTap()
+                                })
+                            } else {
                                 LevelCell(level: level)
+                                    .onTapGesture {
+                                        HapticManager.shared.lockedItemTap()
+                                    }
                             }
-                            .disabled(!level.isUnlocked)
                         }
                     }
                     .padding()

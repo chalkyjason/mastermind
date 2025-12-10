@@ -96,6 +96,15 @@ class GameManager: ObservableObject {
         // Unlock next level
         if index + 1 < levels.count && !levels[index + 1].isUnlocked {
             levels[index + 1].isUnlocked = true
+
+            // Check if we're unlocking a new tier
+            let currentTier = levels[index].tier
+            let nextTier = levels[index + 1].tier
+            if currentTier != nextTier {
+                HapticManager.shared.tierUnlocked()
+            } else {
+                HapticManager.shared.levelUnlocked()
+            }
         }
         
         // Update streak
@@ -187,10 +196,10 @@ class GameManager: ObservableObject {
         let calendar = Calendar.current
         let today = calendar.startOfDay(for: Date())
         let lastPlayed = defaults.object(forKey: Keys.lastPlayedDate) as? Date
-        
+
         if let last = lastPlayed {
             let lastDay = calendar.startOfDay(for: last)
-            
+
             if lastDay == today {
                 // Already played today, no streak update
                 return
@@ -205,13 +214,19 @@ class GameManager: ObservableObject {
             // First time playing
             currentStreak = 1
         }
-        
+
+        // Check for streak milestones and trigger haptic celebrations
+        let milestones = [3, 7, 14, 30]
+        if milestones.contains(currentStreak) {
+            HapticManager.shared.streakMilestone(currentStreak)
+        }
+
         // Update longest streak
         if currentStreak > longestStreak {
             longestStreak = currentStreak
             GameCenterManager.shared.reportStreak(longestStreak)
         }
-        
+
         defaults.set(today, forKey: Keys.lastPlayedDate)
     }
     

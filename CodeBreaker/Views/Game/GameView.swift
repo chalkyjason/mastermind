@@ -37,7 +37,10 @@ struct GameView: View {
                     title: headerTitle,
                     attemptsRemaining: game.attemptsRemaining,
                     maxAttempts: game.maxAttempts,
-                    onPause: { dismiss() }
+                    onPause: {
+                        HapticManager.shared.navigate()
+                        dismiss()
+                    }
                 )
                 
                 // Main game area
@@ -66,6 +69,12 @@ struct GameView: View {
                                         selectedPegIndex = index
                                         showingColorPicker = true
                                         HapticManager.shared.selection()
+                                    },
+                                    onPegLongPress: { index in
+                                        // Long press clears the peg
+                                        game.setColor(at: index, color: nil)
+                                        HapticManager.shared.pegRemoved()
+                                        selectedPegIndex = index
                                     }
                                 )
                                 .id("current")
@@ -348,7 +357,8 @@ struct CurrentGuessRowView: View {
     let attemptNumber: Int
     let selectedIndex: Int?
     let onPegTap: (Int) -> Void
-    
+    var onPegLongPress: ((Int) -> Void)? = nil
+
     var body: some View {
         HStack(spacing: 12) {
             // Attempt number
@@ -356,22 +366,34 @@ struct CurrentGuessRowView: View {
                 .font(.caption.weight(.bold))
                 .foregroundColor(.white)
                 .frame(width: 24)
-            
-            // Guess pegs (tappable)
+
+            // Guess pegs (tappable with long press support)
             HStack(spacing: 8) {
                 ForEach(0..<codeLength, id: \.self) { index in
-                    Button(action: { onPegTap(index) }) {
-                        if let color = currentGuess[index] {
-                            PegView(color: color, isSelected: selectedIndex == index)
-                        } else {
-                            EmptyPegView(isSelected: selectedIndex == index)
-                        }
+                    if let color = currentGuess[index] {
+                        PegView(color: color, isSelected: selectedIndex == index)
+                            .onTapGesture {
+                                onPegTap(index)
+                            }
+                            .onLongPressGesture(minimumDuration: 0.3, pressing: { isPressing in
+                                if isPressing {
+                                    HapticManager.shared.longPressStart()
+                                }
+                            }) {
+                                HapticManager.shared.longPressEnd()
+                                onPegLongPress?(index)
+                            }
+                    } else {
+                        EmptyPegView(isSelected: selectedIndex == index)
+                            .onTapGesture {
+                                onPegTap(index)
+                            }
                     }
                 }
             }
-            
+
             Spacer()
-            
+
             // Empty feedback area
             FeedbackPegsView(feedback: Array(repeating: .empty, count: codeLength))
                 .opacity(0.3)
