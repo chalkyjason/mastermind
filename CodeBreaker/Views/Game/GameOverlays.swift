@@ -65,7 +65,10 @@ struct WinOverlayView: View {
                 
                 // Buttons
                 VStack(spacing: 12) {
-                    Button(action: onContinue) {
+                    Button(action: {
+                        HapticManager.shared.primaryButtonTap()
+                        onContinue()
+                    }) {
                         Text(isDaily ? "Done" : "Continue")
                             .font(.headline.weight(.bold))
                             .foregroundColor(.white)
@@ -74,9 +77,12 @@ struct WinOverlayView: View {
                             .background(Color("AccentGreen"))
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    
+
                     if !isDaily {
-                        Button(action: onReplay) {
+                        Button(action: {
+                            HapticManager.shared.gameRestart()
+                            onReplay()
+                        }) {
                             Text("Play Again")
                                 .font(.headline)
                                 .foregroundColor(.white.opacity(0.8))
@@ -152,7 +158,10 @@ struct LoseOverlayView: View {
                 
                 // Buttons
                 VStack(spacing: 12) {
-                    Button(action: onRetry) {
+                    Button(action: {
+                        HapticManager.shared.gameRestart()
+                        onRetry()
+                    }) {
                         Label("Try Again", systemImage: "arrow.counterclockwise")
                             .font(.headline.weight(.bold))
                             .foregroundColor(.white)
@@ -161,8 +170,11 @@ struct LoseOverlayView: View {
                             .background(Color("AccentOrange"))
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    
-                    Button(action: onQuit) {
+
+                    Button(action: {
+                        HapticManager.shared.secondaryButtonTap()
+                        onQuit()
+                    }) {
                         Text("Quit")
                             .font(.headline)
                             .foregroundColor(.white.opacity(0.8))
