@@ -47,7 +47,10 @@ class MastermindGame: ObservableObject {
             
             if tier.allowDuplicates {
                 for _ in 0..<tier.codeLength {
-                    code.append(colors.randomElement(using: &rng)!)
+                    guard let color = colors.randomElement(using: &rng) else {
+                        fatalError("Tier must have available colors")
+                    }
+                    code.append(color)
                 }
             } else {
                 var available = colors.shuffled(using: &rng)
@@ -59,7 +62,10 @@ class MastermindGame: ObservableObject {
             // Random code
             if tier.allowDuplicates {
                 for _ in 0..<tier.codeLength {
-                    code.append(colors.randomElement()!)
+                    guard let color = colors.randomElement() else {
+                        fatalError("Tier must have available colors")
+                    }
+                    code.append(color)
                 }
             } else {
                 var available = colors.shuffled()
