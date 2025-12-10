@@ -59,6 +59,7 @@ struct ContentView: View {
                             icon: "play.fill",
                             color: Color("AccentGreen")
                         ) {
+                            SoundManager.shared.buttonTap()
                             showingLevelSelect = true
                         }
                         
@@ -68,6 +69,7 @@ struct ContentView: View {
                             color: Color("AccentPurple"),
                             badge: gameManager.hasDailyChallengeAvailable ? "NEW" : nil
                         ) {
+                            SoundManager.shared.buttonTap()
                             showingDailyChallenge = true
                         }
                         

@@ -144,11 +144,12 @@ struct WinOverlayView: View {
                 codeRevealed = true
             }
 
-            // Animate stars with haptics
+            // Animate stars with haptics and sound
             for i in 0..<stars {
                 DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.2 + 0.8) {
                     starAnimations[i] = true
                     HapticManager.shared.starEarned()
+                    SoundManager.shared.starEarned()
                 }
             }
         }

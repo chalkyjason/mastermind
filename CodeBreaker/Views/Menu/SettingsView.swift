@@ -33,6 +33,12 @@ struct SettingsView: View {
                         Toggle(isOn: $soundEnabled) {
                             Label("Sound Effects", systemImage: "speaker.wave.2")
                         }
+                        .onChange(of: soundEnabled) { _, newValue in
+                            SoundManager.setEnabled(newValue)
+                            if newValue {
+                                SoundManager.shared.buttonTap()
+                            }
+                        }
                         
                         Toggle(isOn: $colorblindMode) {
                             Label("Colorblind Mode", systemImage: "eye")
