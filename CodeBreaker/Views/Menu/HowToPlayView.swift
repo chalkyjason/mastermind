@@ -205,8 +205,8 @@ struct TutorialPageView: View {
             }
             
             // Example guess if showing feedback
-            if page.feedbackDemo != nil {
-                ExampleGuessView(feedback: page.feedbackDemo!)
+            if let feedbackDemo = page.feedbackDemo {
+                ExampleGuessView(feedback: feedbackDemo)
                     .padding(.top, 16)
             }
             

@@ -59,6 +59,7 @@ struct ContentView: View {
                             icon: "play.fill",
                             color: Color("AccentGreen")
                         ) {
+                            SoundManager.shared.buttonTap()
                             showingLevelSelect = true
                         }
                         
@@ -68,6 +69,7 @@ struct ContentView: View {
                             color: Color("AccentPurple"),
                             badge: gameManager.hasDailyChallengeAvailable ? "NEW" : nil
                         ) {
+                            SoundManager.shared.buttonTap()
                             showingDailyChallenge = true
                         }
                         
@@ -199,20 +201,31 @@ struct ScaleButtonStyle: ButtonStyle {
 
 struct CodePreviewView: View {
     @State private var animatedColors: [PegColor] = [.red, .blue, .green, .yellow]
-    
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
     let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
-    
+
     var body: some View {
         HStack(spacing: 12) {
             ForEach(0..<4, id: \.self) { index in
-                Circle()
-                    .fill(animatedColors[index].color)
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 3)
-                    )
-                    .shadow(color: animatedColors[index].color.opacity(0.5), radius: 8, y: 2)
+                ZStack {
+                    Circle()
+                        .fill(animatedColors[index].color)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 3)
+                        )
+                        .shadow(color: animatedColors[index].color.opacity(0.5), radius: 8, y: 2)
+
+                    // Colorblind pattern
+                    if colorblindMode {
+                        Image(systemName: animatedColors[index].pattern)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    }
+                }
             }
         }
         .onReceive(timer) { _ in

@@ -4,7 +4,10 @@ struct DailyChallengeView: View {
     @EnvironmentObject var gameManager: GameManager
     @Environment(\.dismiss) private var dismiss
     @State private var showingGame = false
-    
+    @State private var timeUntilNext = ""
+
+    let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
+
     var challenge: DailyChallenge? {
         gameManager.dailyChallenge
     }
@@ -107,11 +110,16 @@ struct DailyChallengeView: View {
                                     .foregroundColor(.white.opacity(0.7))
                             }
                             
-                            Text("Come back tomorrow for a new challenge!")
-                                .font(.caption)
-                                .foregroundColor(.white.opacity(0.5))
-                                .multilineTextAlignment(.center)
-                                .padding(.top, 8)
+                            VStack(spacing: 4) {
+                                Text("Next challenge in:")
+                                    .font(.caption)
+                                    .foregroundColor(.white.opacity(0.5))
+
+                                Text(timeUntilNext)
+                                    .font(.caption.weight(.semibold).monospacedDigit())
+                                    .foregroundColor(Color("AccentPurple"))
+                            }
+                            .padding(.top, 8)
                         }
                     } else {
                         // Play button
@@ -153,6 +161,26 @@ struct DailyChallengeView: View {
                 )
             }
         }
+        .onAppear {
+            updateCountdown()
+        }
+        .onReceive(timer) { _ in
+            updateCountdown()
+        }
+    }
+
+    private func updateCountdown() {
+        let calendar = Calendar.current
+        let now = Date()
+        let tomorrow = calendar.startOfDay(for: calendar.date(byAdding: .day, value: 1, to: now) ?? now)
+
+        let components = calendar.dateComponents([.hour, .minute, .second], from: now, to: tomorrow)
+
+        let hours = components.hour ?? 0
+        let minutes = components.minute ?? 0
+        let seconds = components.second ?? 0
+
+        timeUntilNext = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
     }
 }
 

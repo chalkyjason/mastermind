@@ -249,7 +249,10 @@ struct DailyChallenge: Codable {
         var code: [PegColor] = []
         
         for _ in 0..<tier.codeLength {
-            code.append(colors.randomElement(using: &rng)!)
+            guard let color = colors.randomElement(using: &rng) else {
+                fatalError("Tier must have available colors")
+            }
+            code.append(color)
         }
         
         return DailyChallenge(date: today, secretCode: code, tier: tier)
