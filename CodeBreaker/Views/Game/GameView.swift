@@ -419,18 +419,29 @@ struct EmptyRowView: View {
 struct PegView: View {
     let color: PegColor
     var isSelected: Bool = false
-    
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
     var body: some View {
-        Circle()
-            .fill(color.color)
-            .frame(width: 44, height: 44)
-            .overlay(
-                Circle()
-                    .stroke(isSelected ? Color.white : Color.white.opacity(0.3), lineWidth: isSelected ? 3 : 2)
-            )
-            .shadow(color: color.color.opacity(0.5), radius: isSelected ? 8 : 4, y: 2)
-            .scaleEffect(isSelected ? 1.1 : 1.0)
-            .animation(.easeInOut(duration: 0.15), value: isSelected)
+        ZStack {
+            Circle()
+                .fill(color.color)
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? Color.white : Color.white.opacity(0.3), lineWidth: isSelected ? 3 : 2)
+                )
+                .shadow(color: color.color.opacity(0.5), radius: isSelected ? 8 : 4, y: 2)
+
+            // Colorblind pattern overlay
+            if colorblindMode {
+                Image(systemName: color.pattern)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+            }
+        }
+        .scaleEffect(isSelected ? 1.1 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
 }
 
@@ -478,19 +489,30 @@ struct FeedbackPegsView: View {
 struct ColorPickerView: View {
     let colors: [PegColor]
     let onColorSelected: (PegColor) -> Void
-    
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
     var body: some View {
         HStack(spacing: 12) {
             ForEach(colors) { color in
                 Button(action: { onColorSelected(color) }) {
-                    Circle()
-                        .fill(color.color)
-                        .frame(width: 48, height: 48)
-                        .overlay(
-                            Circle()
-                                .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                        )
-                        .shadow(color: color.color.opacity(0.5), radius: 4, y: 2)
+                    ZStack {
+                        Circle()
+                            .fill(color.color)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                            )
+                            .shadow(color: color.color.opacity(0.5), radius: 4, y: 2)
+
+                        // Colorblind pattern overlay
+                        if colorblindMode {
+                            Image(systemName: color.pattern)
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(.white.opacity(0.9))
+                                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                        }
+                    }
                 }
                 .buttonStyle(ScaleButtonStyle())
             }

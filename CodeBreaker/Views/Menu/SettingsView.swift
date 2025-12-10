@@ -107,12 +107,21 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         
-                        Link(destination: URL(string: "https://example.com/privacy")!) {
-                            Label("Privacy Policy", systemImage: "hand.raised")
+                        // Note: Update these URLs before release
+                        if let privacyURL = URL(string: "https://example.com/privacy") {
+                            Link(destination: privacyURL) {
+                                Label("Privacy Policy", systemImage: "hand.raised")
+                            }
+                            .disabled(true)
+                            .opacity(0.5)
                         }
-                        
-                        Link(destination: URL(string: "https://example.com/terms")!) {
-                            Label("Terms of Service", systemImage: "doc.text")
+
+                        if let termsURL = URL(string: "https://example.com/terms") {
+                            Link(destination: termsURL) {
+                                Label("Terms of Service", systemImage: "doc.text")
+                            }
+                            .disabled(true)
+                            .opacity(0.5)
                         }
                     } header: {
                         Text("About")

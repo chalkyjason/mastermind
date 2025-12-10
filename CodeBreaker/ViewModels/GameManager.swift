@@ -85,7 +85,11 @@ class GameManager: ObservableObject {
         }
         
         // Update best attempts if better
-        if levels[index].bestAttempts == nil || attempts < levels[index].bestAttempts! {
+        if let bestAttempts = levels[index].bestAttempts {
+            if attempts < bestAttempts {
+                levels[index].bestAttempts = attempts
+            }
+        } else {
             levels[index].bestAttempts = attempts
         }
         
