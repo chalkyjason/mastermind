@@ -54,11 +54,13 @@ struct ContentView: View {
                     
                     // Menu buttons
                     VStack(spacing: 16) {
+                        // NOTE: If you see "Cannot find 'SoundManager' in scope", ensure that 'SoundManager.swift' is included in your target. No import is necessary if it is part of the same module.
                         MenuButton(
                             title: "Play",
                             icon: "play.fill",
                             color: Color("AccentGreen")
                         ) {
+                            SoundManager.shared.buttonTap()
                             showingLevelSelect = true
                         }
                         
@@ -68,6 +70,7 @@ struct ContentView: View {
                             color: Color("AccentPurple"),
                             badge: gameManager.hasDailyChallengeAvailable ? "NEW" : nil
                         ) {
+                            SoundManager.shared.buttonTap()
                             showingDailyChallenge = true
                         }
                         
@@ -187,32 +190,35 @@ struct SmallMenuButton: View {
     }
 }
 
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
-    }
-}
-
 // MARK: - Code Preview Animation
 
 struct CodePreviewView: View {
     @State private var animatedColors: [PegColor] = [.red, .blue, .green, .yellow]
-    
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
     let timer = Timer.publish(every: 2, on: .main, in: .common).autoconnect()
-    
+
     var body: some View {
         HStack(spacing: 12) {
             ForEach(0..<4, id: \.self) { index in
-                Circle()
-                    .fill(animatedColors[index].color)
-                    .frame(width: 50, height: 50)
-                    .overlay(
-                        Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 3)
-                    )
-                    .shadow(color: animatedColors[index].color.opacity(0.5), radius: 8, y: 2)
+                ZStack {
+                    Circle()
+                        .fill(animatedColors[index].color)
+                        .frame(width: 50, height: 50)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(0.3), lineWidth: 3)
+                        )
+                        .shadow(color: animatedColors[index].color.opacity(0.5), radius: 8, y: 2)
+
+                    // Colorblind pattern
+                    if colorblindMode {
+                        Image(systemName: animatedColors[index].pattern)
+                            .font(.system(size: 22, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    }
+                }
             }
         }
         .onReceive(timer) { _ in
@@ -227,9 +233,11 @@ struct CodePreviewView: View {
 
 struct StatsBarView: View {
     @EnvironmentObject var gameManager: GameManager
-    
+    @EnvironmentObject var livesManager: LivesManager
+
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 16) {
+            LivesStatItem()
             StatItem(icon: "star.fill", value: "\(gameManager.totalStars)", label: "Stars")
             StatItem(icon: "checkmark.circle.fill", value: "\(gameManager.levelsCompleted)", label: "Levels")
             StatItem(icon: "flame.fill", value: "\(gameManager.currentStreak)", label: "Streak")
@@ -238,6 +246,34 @@ struct StatsBarView: View {
         .padding(.vertical, 12)
         .background(Color.white.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+// MARK: - Lives Stat Item
+
+struct LivesStatItem: View {
+    @EnvironmentObject var livesManager: LivesManager
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: "heart.fill")
+                    .foregroundColor(livesManager.hasLives ? Color("PegRed") : .gray)
+                Text("\(livesManager.lives)")
+                    .font(.headline.weight(.bold))
+                    .foregroundColor(.white)
+            }
+            if let timeString = livesManager.formattedTimeUntilNextLife {
+                Text(timeString)
+                    .font(.caption2.monospacedDigit())
+                    .foregroundColor(.white.opacity(0.7))
+            } else {
+                Text("Lives")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -267,4 +303,5 @@ struct StatItem: View {
     ContentView()
         .environmentObject(GameManager())
         .environmentObject(GameCenterManager())
+        .environmentObject(LivesManager.shared)
 }

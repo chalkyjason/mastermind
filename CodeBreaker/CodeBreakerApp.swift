@@ -9,12 +9,15 @@ struct CodeBreakerApp: App {
         // Initialize Google Mobile Ads SDK
         AdManager.configure()
     }
+    // NOTE: If you see "Cannot find 'LivesManager' in scope", ensure that 'LivesManager.swift' is included in your target. No import is necessary if it is part of the same module.
+    @StateObject private var livesManager = LivesManager.shared
 
     var body: some Scene {
         WindowGroup {
             ContentView()
                 .environmentObject(gameManager)
                 .environmentObject(gameCenterManager)
+                .environmentObject(livesManager)
                 .onAppear {
                     gameCenterManager.authenticatePlayer()
                 }

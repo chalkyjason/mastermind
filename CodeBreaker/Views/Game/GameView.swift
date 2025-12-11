@@ -1,7 +1,9 @@
 import SwiftUI
+import Foundation
 
 struct GameView: View {
     @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var livesManager: LivesManager
     @StateObject private var game: MastermindGame
     @ObservedObject private var adManager = AdManager.shared
     @Environment(\.dismiss) private var dismiss
@@ -54,7 +56,7 @@ struct GameView: View {
                                     result: result,
                                     codeLength: game.codeLength,
                                     attemptNumber: index + 1,
-                                    isRevealing: false
+                                    isRevealing: index == game.guessHistory.count - 1
                                 )
                                 .id(index)
                             }
@@ -73,7 +75,7 @@ struct GameView: View {
                                     },
                                     onPegLongPress: { index in
                                         // Long press clears the peg
-                                        game.setColor(at: index, color: nil)
+                                        game.clearPosition(at: index)
                                         HapticManager.shared.pegRemoved()
                                         selectedPegIndex = index
                                     }
@@ -106,7 +108,8 @@ struct GameView: View {
                                 if let index = selectedPegIndex {
                                     game.setColor(at: index, color: color)
                                     HapticManager.shared.pegPlaced()
-                                    
+                                    SoundManager.shared.pegPlaced()
+
                                     // Auto-advance to next empty slot
                                     advanceToNextEmptySlot(from: index)
                                 }
@@ -118,6 +121,7 @@ struct GameView: View {
                                 game.clearCurrentGuess()
                                 selectedPegIndex = 0
                                 HapticManager.shared.impact(.light)
+                                SoundManager.shared.pegRemoved()
                             }) {
                                 Label("Clear", systemImage: "xmark.circle.fill")
                                     .font(.headline)
@@ -214,28 +218,25 @@ struct GameView: View {
     
     private func submitGuess() {
         guard game.isGuessComplete else { return }
-        
+
         HapticManager.shared.guessSubmitted()
-        
+        SoundManager.shared.guessSubmitted()
+
         if let result = game.submitGuess() {
             // Trigger haptic feedback for result
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 HapticManager.shared.feedbackReveal(blackCount: result.blackCount, whiteCount: result.whiteCount)
             }
         }
-        
+
         selectedPegIndex = 0
     }
     
     private func handleGameStateChange(_ state: GameState) {
         switch state {
-        case .won(let attempts, let stars):
-            // Check for perfect game (3 stars)
-            if stars == 3 {
-                HapticManager.shared.perfectGame()
-            } else {
-                HapticManager.shared.correctGuess()
-            }
+        case .won:
+            HapticManager.shared.correctGuess()
+            SoundManager.shared.correctGuess()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation {
                     showingWinSheet = true
@@ -244,6 +245,8 @@ struct GameView: View {
 
         case .lost:
             HapticManager.shared.gameLost()
+            SoundManager.shared.gameLost()
+            livesManager.useLife()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation {
                     showingLoseSheet = true
@@ -342,7 +345,7 @@ struct GuessRowView: View {
     let codeLength: Int
     let attemptNumber: Int
     let isRevealing: Bool
-    
+
     var body: some View {
         HStack(spacing: 12) {
             // Attempt number
@@ -350,18 +353,18 @@ struct GuessRowView: View {
                 .font(.caption.weight(.bold))
                 .foregroundColor(.white.opacity(0.5))
                 .frame(width: 24)
-            
+
             // Guess pegs
             HStack(spacing: 8) {
                 ForEach(0..<codeLength, id: \.self) { index in
                     PegView(color: result.guess[index])
                 }
             }
-            
+
             Spacer()
-            
-            // Feedback pegs
-            FeedbackPegsView(feedback: result.feedback)
+
+            // Feedback pegs with animation
+            FeedbackPegsView(feedback: result.feedback, shouldAnimate: isRevealing)
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
@@ -467,18 +470,29 @@ struct EmptyRowView: View {
 struct PegView: View {
     let color: PegColor
     var isSelected: Bool = false
-    
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
     var body: some View {
-        Circle()
-            .fill(color.color)
-            .frame(width: 44, height: 44)
-            .overlay(
-                Circle()
-                    .stroke(isSelected ? Color.white : Color.white.opacity(0.3), lineWidth: isSelected ? 3 : 2)
-            )
-            .shadow(color: color.color.opacity(0.5), radius: isSelected ? 8 : 4, y: 2)
-            .scaleEffect(isSelected ? 1.1 : 1.0)
-            .animation(.easeInOut(duration: 0.15), value: isSelected)
+        ZStack {
+            Circle()
+                .fill(color.color)
+                .frame(width: 44, height: 44)
+                .overlay(
+                    Circle()
+                        .stroke(isSelected ? Color.white : Color.white.opacity(0.3), lineWidth: isSelected ? 3 : 2)
+                )
+                .shadow(color: color.color.opacity(0.5), radius: isSelected ? 8 : 4, y: 2)
+
+            // Colorblind pattern overlay
+            if colorblindMode {
+                Image(systemName: color.pattern)
+                    .font(.system(size: 20, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+            }
+        }
+        .scaleEffect(isSelected ? 1.1 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
     }
 }
 
@@ -502,10 +516,13 @@ struct EmptyPegView: View {
 
 struct FeedbackPegsView: View {
     let feedback: [FeedbackPeg]
-    
+    var shouldAnimate: Bool = false
+
+    @State private var revealedIndices: Set<Int> = []
+
     var body: some View {
         let gridSize = feedback.count <= 4 ? 2 : 3
-        
+
         LazyVGrid(columns: Array(repeating: GridItem(.fixed(12), spacing: 4), count: gridSize), spacing: 4) {
             ForEach(0..<feedback.count, id: \.self) { index in
                 Circle()
@@ -515,9 +532,25 @@ struct FeedbackPegsView: View {
                         Circle()
                             .stroke(Color.gray.opacity(0.5), lineWidth: 1)
                     )
+                    .scaleEffect(shouldAnimate && revealedIndices.contains(index) ? 1 : (shouldAnimate ? 0 : 1))
+                    .opacity(shouldAnimate && revealedIndices.contains(index) ? 1 : (shouldAnimate ? 0 : 1))
+                    .animation(
+                        shouldAnimate ? .spring(response: 0.4, dampingFraction: 0.6).delay(Double(index) * 0.1) : nil,
+                        value: revealedIndices
+                    )
             }
         }
         .frame(width: CGFloat(gridSize) * 16, height: CGFloat((feedback.count + gridSize - 1) / gridSize) * 16)
+        .onAppear {
+            if shouldAnimate {
+                // Trigger reveal animation
+                for i in 0..<feedback.count {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + Double(i) * 0.1) {
+                        revealedIndices.insert(i)
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -526,37 +559,32 @@ struct FeedbackPegsView: View {
 struct ColorPickerView: View {
     let colors: [PegColor]
     let onColorSelected: (PegColor) -> Void
-    @State private var pressedColor: PegColor?
+    @AppStorage("colorblindMode") private var colorblindMode = false
 
     var body: some View {
         HStack(spacing: 12) {
             ForEach(colors) { color in
-                Circle()
-                    .fill(color.color)
-                    .frame(width: 48, height: 48)
-                    .overlay(
+                Button(action: { onColorSelected(color) }) {
+                    ZStack {
                         Circle()
-                            .stroke(pressedColor == color ? Color.white : Color.white.opacity(0.3), lineWidth: pressedColor == color ? 3 : 2)
-                    )
-                    .shadow(color: color.color.opacity(0.5), radius: pressedColor == color ? 8 : 4, y: 2)
-                    .scaleEffect(pressedColor == color ? 1.15 : 1.0)
-                    .animation(.easeInOut(duration: 0.1), value: pressedColor)
-                    .onTapGesture {
-                        HapticManager.shared.colorSelected()
-                        onColorSelected(color)
-                    }
-                    .onLongPressGesture(minimumDuration: 0.5, pressing: { isPressing in
-                        if isPressing {
-                            pressedColor = color
-                            HapticManager.shared.longPressStart()
-                        } else {
-                            pressedColor = nil
+                            .fill(color.color)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                            )
+                            .shadow(color: color.color.opacity(0.5), radius: 4, y: 2)
+
+                        // Colorblind pattern overlay
+                        if colorblindMode {
+                            Image(systemName: color.pattern)
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(.white.opacity(0.9))
+                                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
                         }
-                    }) {
-                        HapticManager.shared.longPressEnd()
-                        pressedColor = nil
-                        onColorSelected(color)
                     }
+                }
+                .buttonStyle(ScaleButtonStyle())
             }
         }
     }
@@ -565,4 +593,5 @@ struct ColorPickerView: View {
 #Preview {
     GameView(tier: .tutorial, level: GameLevel(id: 0, tier: .tutorial, levelInTier: 1, isUnlocked: true))
         .environmentObject(GameManager())
+        .environmentObject(LivesManager.shared)
 }

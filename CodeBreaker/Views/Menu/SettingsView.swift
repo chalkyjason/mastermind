@@ -3,14 +3,15 @@ import SwiftUI
 struct SettingsView: View {
     @EnvironmentObject var gameManager: GameManager
     @EnvironmentObject var gameCenterManager: GameCenterManager
+    @EnvironmentObject var livesManager: LivesManager
     @Environment(\.dismiss) private var dismiss
-    
+
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
     @AppStorage("soundEnabled") private var soundEnabled = true
     @AppStorage("colorblindMode") private var colorblindMode = false
-    
+
     @State private var showingResetAlert = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -32,6 +33,12 @@ struct SettingsView: View {
                         
                         Toggle(isOn: $soundEnabled) {
                             Label("Sound Effects", systemImage: "speaker.wave.2")
+                        }
+                        .onChange(of: soundEnabled) { _, newValue in
+                            SoundManager.setEnabled(newValue)
+                            if newValue {
+                                SoundManager.shared.buttonTap()
+                            }
                         }
                         
                         Toggle(isOn: $colorblindMode) {
@@ -97,7 +104,50 @@ struct SettingsView: View {
                     } header: {
                         Text("Statistics")
                     }
-                    
+
+                    // Lives
+                    Section {
+                        HStack {
+                            Label("Lives", systemImage: "heart.fill")
+                            Spacer()
+                            HStack(spacing: 4) {
+                                ForEach(0..<LivesManager.maxLives, id: \.self) { index in
+                                    Image(systemName: index < livesManager.lives ? "heart.fill" : "heart")
+                                        .foregroundColor(index < livesManager.lives ? Color("PegRed") : .gray)
+                                        .font(.caption)
+                                }
+                            }
+                        }
+
+                        if let timeString = livesManager.formattedTimeUntilNextLife {
+                            HStack {
+                                Label("Next Life", systemImage: "clock")
+                                Spacer()
+                                Text(timeString)
+                                    .foregroundColor(.secondary)
+                                    .monospacedDigit()
+                            }
+                        }
+
+                        #if DEBUG
+                        Button(action: {
+                            livesManager.debugSetLives(0)
+                        }) {
+                            Label("Debug: Set 0 Lives", systemImage: "heart.slash")
+                        }
+
+                        Button(action: {
+                            livesManager.debugResetLives()
+                        }) {
+                            Label("Debug: Refill Lives", systemImage: "heart.fill")
+                        }
+                        #endif
+                    } header: {
+                        Text("Lives")
+                    } footer: {
+                        Text("Lives regenerate every 30 minutes. Watch ads to get extra lives instantly.")
+                    }
+
                     // About
                     Section {
                         HStack {
@@ -107,12 +157,21 @@ struct SettingsView: View {
                                 .foregroundColor(.secondary)
                         }
                         
-                        Link(destination: URL(string: "https://example.com/privacy")!) {
-                            Label("Privacy Policy", systemImage: "hand.raised")
+                        // Note: Update these URLs before release
+                        if let privacyURL = URL(string: "https://example.com/privacy") {
+                            Link(destination: privacyURL) {
+                                Label("Privacy Policy", systemImage: "hand.raised")
+                            }
+                            .disabled(true)
+                            .opacity(0.5)
                         }
-                        
-                        Link(destination: URL(string: "https://example.com/terms")!) {
-                            Label("Terms of Service", systemImage: "doc.text")
+
+                        if let termsURL = URL(string: "https://example.com/terms") {
+                            Link(destination: termsURL) {
+                                Label("Terms of Service", systemImage: "doc.text")
+                            }
+                            .disabled(true)
+                            .opacity(0.5)
                         }
                     } header: {
                         Text("About")
@@ -160,4 +219,5 @@ struct SettingsView: View {
     SettingsView()
         .environmentObject(GameManager())
         .environmentObject(GameCenterManager())
+        .environmentObject(LivesManager.shared)
 }
