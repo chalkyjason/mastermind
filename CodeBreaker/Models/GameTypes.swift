@@ -250,7 +250,8 @@ struct DailyChallenge: Codable {
         
         for _ in 0..<tier.codeLength {
             guard let color = colors.randomElement(using: &rng) else {
-                fatalError("Tier must have available colors")
+                assertionFailure("Tier must have available colors")
+                continue
             }
             code.append(color)
         }

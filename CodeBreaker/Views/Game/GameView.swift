@@ -72,7 +72,7 @@ struct GameView: View {
                                     },
                                     onPegLongPress: { index in
                                         // Long press clears the peg
-                                        game.setColor(at: index, color: nil)
+                                        game.clearPosition(at: index)
                                         HapticManager.shared.pegRemoved()
                                         selectedPegIndex = index
                                     }
