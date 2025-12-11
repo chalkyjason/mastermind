@@ -3,15 +3,16 @@ import SwiftUI
 struct GameView: View {
     @EnvironmentObject var gameManager: GameManager
     @StateObject private var game: MastermindGame
+    @ObservedObject private var adManager = AdManager.shared
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var showingColorPicker = false
     @State private var selectedPegIndex: Int?
     @State private var showingWinSheet = false
     @State private var showingLoseSheet = false
     @State private var animatingFeedback = false
     @State private var revealedPegs: Set<Int> = []
-    
+
     let level: GameLevel?
     let isDaily: Bool
     
@@ -165,6 +166,9 @@ struct GameView: View {
             if showingLoseSheet {
                 LoseOverlayView(
                     secretCode: game.secretCode,
+                    canWatchAd: game.canUseExtraLife,
+                    isAdReady: adManager.isRewardedAdReady,
+                    onWatchAd: handleWatchAd,
                     onRetry: handleReplay,
                     onQuit: { dismiss() }
                 )
@@ -262,6 +266,23 @@ struct GameView: View {
         dismiss()
     }
     
+    private func handleWatchAd() {
+        adManager.showRewardedAd { [self] success in
+            if success {
+                // User watched the ad and earned a reward
+                withAnimation {
+                    showingLoseSheet = false
+                }
+                game.addExtraLife()
+                selectedPegIndex = 0
+
+                // Haptic feedback for earning the extra life
+                HapticManager.shared.levelUnlocked()
+            }
+            // If not successful, user closed ad early - overlay stays visible
+        }
+    }
+
     private func handleReplay() {
         showingWinSheet = false
         showingLoseSheet = false

@@ -118,24 +118,29 @@ struct WinOverlayView: View {
 
 struct LoseOverlayView: View {
     let secretCode: [PegColor]
+    let canWatchAd: Bool
+    let isAdReady: Bool
+    let onWatchAd: () -> Void
     let onRetry: () -> Void
     let onQuit: () -> Void
-    
+
+    @State private var isLoadingAd = false
+
     var body: some View {
         ZStack {
             Color.black.opacity(0.7)
                 .ignoresSafeArea()
-            
+
             VStack(spacing: 24) {
                 // Title
                 Text("Out of Attempts")
                     .font(.title.weight(.bold))
                     .foregroundColor(.white)
-                
+
                 Text("The code was:")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
-                
+
                 // Secret code reveal
                 HStack(spacing: 8) {
                     ForEach(0..<secretCode.count, id: \.self) { index in
@@ -150,14 +155,62 @@ struct LoseOverlayView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                
+
                 // Encouragement
                 Text("Don't give up! Try again.")
                     .font(.subheadline)
                     .foregroundColor(.white.opacity(0.6))
-                
+
                 // Buttons
                 VStack(spacing: 12) {
+                    // Watch Ad for Extra Life button
+                    if canWatchAd {
+                        Button(action: {
+                            HapticManager.shared.primaryButtonTap()
+                            isLoadingAd = true
+                            onWatchAd()
+                        }) {
+                            HStack(spacing: 8) {
+                                if isLoadingAd {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "play.rectangle.fill")
+                                        .font(.title3)
+                                }
+                                Text("Watch Ad for Extra Life")
+                                    .font(.headline.weight(.bold))
+                                Spacer()
+                                Image(systemName: "heart.fill")
+                                    .foregroundColor(.red)
+                                Text("+1")
+                                    .font(.headline.weight(.bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 20)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color("AccentPurple"), Color("AccentBlue")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(color: Color("AccentPurple").opacity(0.4), radius: 8, y: 4)
+                        }
+                        .disabled(!isAdReady || isLoadingAd)
+                        .opacity(isAdReady && !isLoadingAd ? 1 : 0.6)
+
+                        if !isAdReady && !isLoadingAd {
+                            Text("Loading ad...")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                    }
+
                     Button(action: {
                         HapticManager.shared.gameRestart()
                         onRetry()
@@ -210,6 +263,9 @@ struct LoseOverlayView: View {
 #Preview("Lose") {
     LoseOverlayView(
         secretCode: [.red, .blue, .green, .yellow],
+        canWatchAd: true,
+        isAdReady: true,
+        onWatchAd: {},
         onRetry: {},
         onQuit: {}
     )

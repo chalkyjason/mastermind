@@ -7,15 +7,21 @@ class MastermindGame: ObservableObject {
     @Published private(set) var guessHistory: [GuessResult] = []
     @Published var currentGuess: [PegColor?]
     @Published private(set) var gameState: GameState = .playing
-    
+    @Published private(set) var bonusAttempts: Int = 0
+
     let tier: DifficultyTier
     let level: GameLevel?
-    
+
     var codeLength: Int { tier.codeLength }
-    var maxAttempts: Int { tier.maxAttempts }
+    var maxAttempts: Int { tier.maxAttempts + bonusAttempts }
     var availableColors: [PegColor] { tier.availableColors }
     var attemptsRemaining: Int { maxAttempts - guessHistory.count }
     var currentAttempt: Int { guessHistory.count + 1 }
+
+    /// Whether the player can watch an ad for extra life (only when lost and haven't used bonus yet)
+    var canUseExtraLife: Bool {
+        gameState == .lost && bonusAttempts == 0
+    }
     
     var isGuessComplete: Bool {
         currentGuess.allSatisfy { $0 != nil }
@@ -74,10 +80,10 @@ class MastermindGame: ObservableObject {
     
     // MARK: - Gameplay
     
-    func setColor(at index: Int, color: PegColor) {
+    func setColor(at index: Int, color: PegColor?) {
         guard index >= 0 && index < codeLength else { return }
         guard gameState == .playing else { return }
-        
+
         currentGuess[index] = color
     }
     
@@ -163,16 +169,31 @@ class MastermindGame: ObservableObject {
     }
     
     // MARK: - Game Control
-    
+
     func restart() {
         guessHistory = []
-        currentGuess = Array(repeating: nil, count: codeLength)
+        currentGuess = Array(repeating: nil, count: tier.codeLength)
         gameState = .playing
-        
+        bonusAttempts = 0
+
         // Generate new code (unless it's a level with fixed code)
         if level == nil {
             secretCode = Self.generateSecretCode(tier: tier, levelSeed: nil)
         }
+    }
+
+    /// Adds an extra life (attempt) to the game - typically from watching a rewarded ad
+    func addExtraLife() {
+        guard canUseExtraLife else { return }
+
+        // Add one bonus attempt
+        bonusAttempts = 1
+
+        // Resume playing
+        gameState = .playing
+
+        // Clear current guess for fresh start
+        clearCurrentGuess()
     }
     
     func pause() {
