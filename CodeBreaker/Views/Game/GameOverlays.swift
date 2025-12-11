@@ -165,12 +165,15 @@ struct WinOverlayView: View {
 // MARK: - Lose Overlay
 
 struct LoseOverlayView: View {
+    @EnvironmentObject var livesManager: LivesManager
+
     let secretCode: [PegColor]
     let onRetry: () -> Void
     let onQuit: () -> Void
 
     @State private var showContent = false
     @State private var codeRevealed = false
+    @State private var isLoadingAd = false
     @AppStorage("colorblindMode") private var colorblindMode = false
 
     var body: some View {
@@ -227,16 +230,67 @@ struct LoseOverlayView: View {
                     }
                 }
                 .padding(.vertical, 8)
-                
-                // Encouragement
-                Text("Don't give up! Try again.")
-                    .font(.subheadline)
-                    .foregroundColor(.white.opacity(0.6))
+
+                // Lives remaining
+                HStack(spacing: 6) {
+                    ForEach(0..<LivesManager.maxLives, id: \.self) { index in
+                        Image(systemName: index < livesManager.lives ? "heart.fill" : "heart")
+                            .foregroundColor(index < livesManager.lives ? Color("PegRed") : .gray.opacity(0.5))
+                            .font(.title3)
+                    }
+                }
+                .opacity(showContent ? 1 : 0)
+                .animation(.easeIn(duration: 0.3).delay(0.8), value: showContent)
+
+                // Encouragement or warning
+                if livesManager.hasLives {
+                    Text("Don't give up! Try again.")
+                        .font(.subheadline)
+                        .foregroundColor(.white.opacity(0.6))
+                        .opacity(showContent ? 1 : 0)
+                        .animation(.easeIn(duration: 0.3).delay(1.0), value: showContent)
+                } else {
+                    VStack(spacing: 4) {
+                        Text("No lives remaining!")
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundColor(Color("AccentOrange"))
+                        if let timeString = livesManager.formattedTimeUntilNextLife {
+                            Text("Next life in \(timeString)")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.6))
+                        }
+                    }
                     .opacity(showContent ? 1 : 0)
                     .animation(.easeIn(duration: 0.3).delay(1.0), value: showContent)
+                }
 
                 // Buttons
                 VStack(spacing: 12) {
+                    // Watch Ad Button (always show if ad is available and not full lives)
+                    if livesManager.isAdAvailable && !livesManager.isFull {
+                        Button(action: watchAdForLife) {
+                            HStack {
+                                if isLoadingAd {
+                                    ProgressView()
+                                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                        .scaleEffect(0.8)
+                                } else {
+                                    Image(systemName: "play.rectangle.fill")
+                                }
+                                Text("Watch Ad for Life")
+                            }
+                            .font(.headline.weight(.bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color("AccentPurple"))
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                        .disabled(isLoadingAd)
+                    }
+
+                    // Try Again Button (disabled if no lives)
                     Button(action: {
                         HapticManager.shared.gameRestart()
                         onRetry()
@@ -246,10 +300,11 @@ struct LoseOverlayView: View {
                             .foregroundColor(.white)
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 16)
-                            .background(Color("AccentOrange"))
+                            .background(livesManager.hasLives ? Color("AccentOrange") : Color.gray)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
                     .buttonStyle(ScaleButtonStyle())
+                    .disabled(!livesManager.hasLives)
 
                     Button(action: onQuit) {
                         Text("Quit")
@@ -281,6 +336,17 @@ struct LoseOverlayView: View {
             }
         }
     }
+
+    private func watchAdForLife() {
+        isLoadingAd = true
+        livesManager.requestAdForLife { success in
+            isLoadingAd = false
+            if !success {
+                // Ad failed to load - could show an alert here
+                HapticManager.shared.notification(.error)
+            }
+        }
+    }
 }
 
 #Preview("Win") {
@@ -300,6 +366,7 @@ struct LoseOverlayView: View {
         onRetry: {},
         onQuit: {}
     )
+    .environmentObject(LivesManager.shared)
 }
 
 // MARK: - Confetti View
