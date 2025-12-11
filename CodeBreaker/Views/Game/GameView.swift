@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 struct GameView: View {
     @EnvironmentObject var gameManager: GameManager

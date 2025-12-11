@@ -54,6 +54,7 @@ struct ContentView: View {
                     
                     // Menu buttons
                     VStack(spacing: 16) {
+                        // NOTE: If you see "Cannot find 'SoundManager' in scope", ensure that 'SoundManager.swift' is included in your target. No import is necessary if it is part of the same module.
                         MenuButton(
                             title: "Play",
                             icon: "play.fill",
@@ -186,14 +187,6 @@ struct SmallMenuButton: View {
             .shadow(color: color.opacity(0.4), radius: 8, y: 4)
         }
         .buttonStyle(ScaleButtonStyle())
-    }
-}
-
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 

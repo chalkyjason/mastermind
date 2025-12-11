@@ -1,4 +1,5 @@
 import SwiftUI
+import Foundation
 
 // MARK: - Win Overlay
 
@@ -471,3 +472,4 @@ struct ScaleButtonStyle: ButtonStyle {
             .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }
+
