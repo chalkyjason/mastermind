@@ -4,6 +4,11 @@ import SwiftUI
 struct CodeBreakerApp: App {
     @StateObject private var gameManager = GameManager()
     @StateObject private var gameCenterManager = GameCenterManager()
+
+    init() {
+        // Initialize Google Mobile Ads SDK
+        AdManager.configure()
+    }
     // NOTE: If you see "Cannot find 'LivesManager' in scope", ensure that 'LivesManager.swift' is included in your target. No import is necessary if it is part of the same module.
     @StateObject private var livesManager = LivesManager.shared
 

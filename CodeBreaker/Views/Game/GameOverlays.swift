@@ -169,9 +169,13 @@ struct LoseOverlayView: View {
     @EnvironmentObject var livesManager: LivesManager
 
     let secretCode: [PegColor]
+    let canWatchAd: Bool
+    let isAdReady: Bool
+    let onWatchAd: () -> Void
     let onRetry: () -> Void
     let onQuit: () -> Void
 
+    @State private var isLoadingAd = false
     @State private var showContent = false
     @State private var codeRevealed = false
     @State private var isLoadingAd = false
@@ -196,6 +200,8 @@ struct LoseOverlayView: View {
                 Text("The code was:")
                     .font(.headline)
                     .foregroundColor(.white.opacity(0.7))
+
+                // Secret code reveal
                     .opacity(showContent ? 1 : 0)
                     .animation(.easeIn(duration: 0.3).delay(0.4), value: showContent)
 
@@ -232,6 +238,21 @@ struct LoseOverlayView: View {
                 }
                 .padding(.vertical, 8)
 
+                // Encouragement
+                Text("Don't give up! Try again.")
+                    .font(.subheadline)
+                    .foregroundColor(.white.opacity(0.6))
+
+                // Buttons
+                VStack(spacing: 12) {
+                    // Watch Ad for Extra Life button
+                    if canWatchAd {
+                        Button(action: {
+                            HapticManager.shared.primaryButtonTap()
+                            isLoadingAd = true
+                            onWatchAd()
+                        }) {
+                            HStack(spacing: 8) {
                 // Lives remaining
                 HStack(spacing: 6) {
                     ForEach(0..<LivesManager.maxLives, id: \.self) { index in
@@ -277,6 +298,40 @@ struct LoseOverlayView: View {
                                         .scaleEffect(0.8)
                                 } else {
                                     Image(systemName: "play.rectangle.fill")
+                                        .font(.title3)
+                                }
+                                Text("Watch Ad for Extra Life")
+                                    .font(.headline.weight(.bold))
+                                Spacer()
+                                Image(systemName: "heart.fill")
+                                    .foregroundColor(.red)
+                                Text("+1")
+                                    .font(.headline.weight(.bold))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .padding(.horizontal, 20)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color("AccentPurple"), Color("AccentBlue")],
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                            .shadow(color: Color("AccentPurple").opacity(0.4), radius: 8, y: 4)
+                        }
+                        .disabled(!isAdReady || isLoadingAd)
+                        .opacity(isAdReady && !isLoadingAd ? 1 : 0.6)
+
+                        if !isAdReady && !isLoadingAd {
+                            Text("Loading ad...")
+                                .font(.caption)
+                                .foregroundColor(.white.opacity(0.5))
+                        }
+                    }
+
                                 }
                                 Text("Watch Ad for Life")
                             }
@@ -364,6 +419,9 @@ struct LoseOverlayView: View {
 #Preview("Lose") {
     LoseOverlayView(
         secretCode: [.red, .blue, .green, .yellow],
+        canWatchAd: true,
+        isAdReady: true,
+        onWatchAd: {},
         onRetry: {},
         onQuit: {}
     )
