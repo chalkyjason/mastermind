@@ -240,9 +240,11 @@ struct CodePreviewView: View {
 
 struct StatsBarView: View {
     @EnvironmentObject var gameManager: GameManager
-    
+    @EnvironmentObject var livesManager: LivesManager
+
     var body: some View {
-        HStack(spacing: 20) {
+        HStack(spacing: 16) {
+            LivesStatItem()
             StatItem(icon: "star.fill", value: "\(gameManager.totalStars)", label: "Stars")
             StatItem(icon: "checkmark.circle.fill", value: "\(gameManager.levelsCompleted)", label: "Levels")
             StatItem(icon: "flame.fill", value: "\(gameManager.currentStreak)", label: "Streak")
@@ -251,6 +253,34 @@ struct StatsBarView: View {
         .padding(.vertical, 12)
         .background(Color.white.opacity(0.1))
         .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+}
+
+// MARK: - Lives Stat Item
+
+struct LivesStatItem: View {
+    @EnvironmentObject var livesManager: LivesManager
+
+    var body: some View {
+        VStack(spacing: 4) {
+            HStack(spacing: 4) {
+                Image(systemName: "heart.fill")
+                    .foregroundColor(livesManager.hasLives ? Color("PegRed") : .gray)
+                Text("\(livesManager.lives)")
+                    .font(.headline.weight(.bold))
+                    .foregroundColor(.white)
+            }
+            if let timeString = livesManager.formattedTimeUntilNextLife {
+                Text(timeString)
+                    .font(.caption2.monospacedDigit())
+                    .foregroundColor(.white.opacity(0.7))
+            } else {
+                Text("Lives")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.7))
+            }
+        }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -280,4 +310,5 @@ struct StatItem: View {
     ContentView()
         .environmentObject(GameManager())
         .environmentObject(GameCenterManager())
+        .environmentObject(LivesManager.shared)
 }

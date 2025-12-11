@@ -2,16 +2,18 @@ import SwiftUI
 
 struct DailyChallengeView: View {
     @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var livesManager: LivesManager
     @Environment(\.dismiss) private var dismiss
     @State private var showingGame = false
     @State private var timeUntilNext = ""
+    @State private var showingNoLivesAlert = false
 
     let timer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     var challenge: DailyChallenge? {
         gameManager.dailyChallenge
     }
-    
+
     var body: some View {
         ZStack {
             // Background
@@ -122,18 +124,48 @@ struct DailyChallengeView: View {
                             .padding(.top, 8)
                         }
                     } else {
+                        // No lives warning
+                        if !livesManager.hasLives {
+                            HStack(spacing: 8) {
+                                Image(systemName: "heart.slash.fill")
+                                    .foregroundColor(Color("PegRed"))
+                                Text("No lives remaining")
+                                    .font(.subheadline)
+                                    .foregroundColor(.white.opacity(0.8))
+                                if let timeString = livesManager.formattedTimeUntilNextLife {
+                                    Text("(\(timeString))")
+                                        .font(.caption.monospacedDigit())
+                                        .foregroundColor(.white.opacity(0.6))
+                                }
+                            }
+                            .padding(.bottom, 8)
+                        }
+
                         // Play button
-                        Button(action: { showingGame = true }) {
+                        Button(action: {
+                            if livesManager.hasLives {
+                                showingGame = true
+                            } else {
+                                showingNoLivesAlert = true
+                                HapticManager.shared.notification(.warning)
+                            }
+                        }) {
                             Label("Play Challenge", systemImage: "play.fill")
                                 .font(.headline.weight(.bold))
                                 .foregroundColor(.white)
                                 .frame(maxWidth: .infinity)
                                 .padding(.vertical, 18)
-                                .background(Color("AccentPurple"))
+                                .background(livesManager.hasLives ? Color("AccentPurple") : Color.gray)
                                 .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
                         }
                         .buttonStyle(ScaleButtonStyle())
                         .padding(.horizontal, 32)
+
+                        // Watch ad button if no lives
+                        if !livesManager.hasLives && livesManager.isAdAvailable {
+                            WatchAdButton(livesManager: livesManager)
+                                .padding(.horizontal, 32)
+                        }
                     }
                 }
                 .padding(32)
@@ -167,6 +199,15 @@ struct DailyChallengeView: View {
         .onReceive(timer) { _ in
             updateCountdown()
         }
+        .alert("No Lives", isPresented: $showingNoLivesAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let timeString = livesManager.formattedTimeUntilNextLife {
+                Text("You're out of lives! Next life in \(timeString). Watch an ad or wait for lives to regenerate.")
+            } else {
+                Text("You're out of lives! Watch an ad or wait for lives to regenerate.")
+            }
+        }
     }
 
     private func updateCountdown() {
@@ -181,6 +222,46 @@ struct DailyChallengeView: View {
         let seconds = components.second ?? 0
 
         timeUntilNext = String(format: "%02d:%02d:%02d", hours, minutes, seconds)
+    }
+}
+
+// MARK: - Watch Ad Button
+
+struct WatchAdButton: View {
+    @ObservedObject var livesManager: LivesManager
+    @State private var isLoadingAd = false
+
+    var body: some View {
+        Button(action: watchAd) {
+            HStack {
+                if isLoadingAd {
+                    ProgressView()
+                        .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                        .scaleEffect(0.8)
+                } else {
+                    Image(systemName: "play.rectangle.fill")
+                }
+                Text("Watch Ad for Life")
+            }
+            .font(.headline.weight(.bold))
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color("AccentGreen"))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(ScaleButtonStyle())
+        .disabled(isLoadingAd)
+    }
+
+    private func watchAd() {
+        isLoadingAd = true
+        livesManager.requestAdForLife { success in
+            isLoadingAd = false
+            if !success {
+                HapticManager.shared.notification(.error)
+            }
+        }
     }
 }
 
@@ -251,5 +332,6 @@ struct DailyChallengeStatsView: View {
     NavigationStack {
         DailyChallengeView()
             .environmentObject(GameManager())
+            .environmentObject(LivesManager.shared)
     }
 }

@@ -63,12 +63,16 @@ class GameCenterManager: ObservableObject {
             } else if GKLocalPlayer.local.isAuthenticated {
                 self?.isAuthenticated = true
                 self?.localPlayer = GKLocalPlayer.local
+                #if DEBUG
                 print("Game Center: Authenticated as \(GKLocalPlayer.local.displayName)")
+                #endif
             } else {
                 self?.isAuthenticated = false
+                #if DEBUG
                 if let error = error {
                     print("Game Center authentication error: \(error.localizedDescription)")
                 }
+                #endif
             }
         }
     }
@@ -84,11 +88,13 @@ class GameCenterManager: ObservableObject {
             player: GKLocalPlayer.local,
             leaderboardIDs: [leaderboard.rawValue]
         ) { error in
+            #if DEBUG
             if let error = error {
                 print("Error submitting score: \(error.localizedDescription)")
             } else {
                 print("Score \(score) submitted to \(leaderboard.rawValue)")
             }
+            #endif
         }
     }
     
@@ -127,11 +133,13 @@ class GameCenterManager: ObservableObject {
         gkAchievement.showsCompletionBanner = true
         
         GKAchievement.report([gkAchievement]) { error in
+            #if DEBUG
             if let error = error {
                 print("Error reporting achievement: \(error.localizedDescription)")
             } else {
                 print("Achievement unlocked: \(achievement.rawValue)")
             }
+            #endif
         }
     }
     

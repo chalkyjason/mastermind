@@ -2,9 +2,11 @@ import SwiftUI
 
 struct LevelSelectView: View {
     @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var livesManager: LivesManager
     @Environment(\.dismiss) private var dismiss
     @State private var selectedTier: DifficultyTier = .tutorial
-    
+    @State private var showingNoLivesAlert = false
+
     var body: some View {
         ZStack {
             // Background
@@ -73,6 +75,13 @@ struct LevelSelectView: View {
                     .padding(.horizontal)
                     .padding(.bottom, 8)
                 
+                // No lives banner
+                if !livesManager.hasLives {
+                    NoLivesBanner(livesManager: livesManager)
+                        .padding(.horizontal)
+                        .padding(.bottom, 8)
+                }
+
                 // Levels grid
                 ScrollView {
                     LazyVGrid(columns: [
@@ -84,12 +93,20 @@ struct LevelSelectView: View {
                     ], spacing: 12) {
                         ForEach(gameManager.levels(for: selectedTier)) { level in
                             if level.isUnlocked {
-                                NavigationLink(destination: GameView(tier: level.tier, level: level)) {
+                                if livesManager.hasLives {
+                                    NavigationLink(destination: GameView(tier: level.tier, level: level)) {
+                                        LevelCell(level: level)
+                                    }
+                                    .simultaneousGesture(TapGesture().onEnded {
+                                        HapticManager.shared.primaryButtonTap()
+                                    })
+                                } else {
                                     LevelCell(level: level)
+                                        .onTapGesture {
+                                            showingNoLivesAlert = true
+                                            HapticManager.shared.notification(.warning)
+                                        }
                                 }
-                                .simultaneousGesture(TapGesture().onEnded {
-                                    HapticManager.shared.primaryButtonTap()
-                                })
                             } else {
                                 LevelCell(level: level)
                                     .onTapGesture {
@@ -103,6 +120,79 @@ struct LevelSelectView: View {
             }
         }
         .navigationBarHidden(true)
+        .alert("No Lives", isPresented: $showingNoLivesAlert) {
+            Button("OK", role: .cancel) {}
+        } message: {
+            if let timeString = livesManager.formattedTimeUntilNextLife {
+                Text("You're out of lives! Next life in \(timeString). Watch an ad or wait for lives to regenerate.")
+            } else {
+                Text("You're out of lives! Watch an ad or wait for lives to regenerate.")
+            }
+        }
+    }
+}
+
+// MARK: - No Lives Banner
+
+struct NoLivesBanner: View {
+    @ObservedObject var livesManager: LivesManager
+    @State private var isLoadingAd = false
+
+    var body: some View {
+        HStack {
+            Image(systemName: "heart.slash.fill")
+                .foregroundColor(Color("PegRed"))
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("No lives remaining")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundColor(.white)
+
+                if let timeString = livesManager.formattedTimeUntilNextLife {
+                    Text("Next life in \(timeString)")
+                        .font(.caption)
+                        .foregroundColor(.white.opacity(0.7))
+                }
+            }
+
+            Spacer()
+
+            if livesManager.isAdAvailable {
+                Button(action: watchAd) {
+                    HStack(spacing: 4) {
+                        if isLoadingAd {
+                            ProgressView()
+                                .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                .scaleEffect(0.7)
+                        } else {
+                            Image(systemName: "play.rectangle.fill")
+                                .font(.caption)
+                        }
+                        Text("Get Life")
+                            .font(.caption.weight(.semibold))
+                    }
+                    .foregroundColor(.white)
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color("AccentPurple"))
+                    .clipShape(Capsule())
+                }
+                .disabled(isLoadingAd)
+            }
+        }
+        .padding()
+        .background(Color("PegRed").opacity(0.2))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    private func watchAd() {
+        isLoadingAd = true
+        livesManager.requestAdForLife { success in
+            isLoadingAd = false
+            if !success {
+                HapticManager.shared.notification(.error)
+            }
+        }
     }
 }
 
@@ -238,5 +328,6 @@ struct LevelCell: View {
     NavigationStack {
         LevelSelectView()
             .environmentObject(GameManager())
+            .environmentObject(LivesManager.shared)
     }
 }

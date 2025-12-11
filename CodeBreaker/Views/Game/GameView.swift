@@ -2,16 +2,17 @@ import SwiftUI
 
 struct GameView: View {
     @EnvironmentObject var gameManager: GameManager
+    @EnvironmentObject var livesManager: LivesManager
     @StateObject private var game: MastermindGame
     @Environment(\.dismiss) private var dismiss
-    
+
     @State private var showingColorPicker = false
     @State private var selectedPegIndex: Int?
     @State private var showingWinSheet = false
     @State private var showingLoseSheet = false
     @State private var animatingFeedback = false
     @State private var revealedPegs: Set<Int> = []
-    
+
     let level: GameLevel?
     let isDaily: Bool
     
@@ -72,7 +73,7 @@ struct GameView: View {
                                     },
                                     onPegLongPress: { index in
                                         // Long press clears the peg
-                                        game.setColor(at: index, color: nil)
+                                        game.clearPosition(at: index)
                                         HapticManager.shared.pegRemoved()
                                         selectedPegIndex = index
                                     }
@@ -240,6 +241,7 @@ struct GameView: View {
         case .lost:
             HapticManager.shared.gameLost()
             SoundManager.shared.gameLost()
+            livesManager.useLife()
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 withAnimation {
                     showingLoseSheet = true
@@ -569,4 +571,5 @@ struct ColorPickerView: View {
 #Preview {
     GameView(tier: .tutorial, level: GameLevel(id: 0, tier: .tutorial, levelInTier: 1, isUnlocked: true))
         .environmentObject(GameManager())
+        .environmentObject(LivesManager.shared)
 }
