@@ -4,6 +4,7 @@ struct SettingsView: View {
     @EnvironmentObject var gameManager: GameManager
     @EnvironmentObject var gameCenterManager: GameCenterManager
     @EnvironmentObject var livesManager: LivesManager
+    @StateObject private var notificationManager = NotificationManager.shared
     @Environment(\.dismiss) private var dismiss
 
     @AppStorage("hapticsEnabled") private var hapticsEnabled = true
@@ -11,6 +12,7 @@ struct SettingsView: View {
     @AppStorage("colorblindMode") private var colorblindMode = false
 
     @State private var showingResetAlert = false
+    @State private var showingTimePicker = false
 
     var body: some View {
         NavigationStack {
@@ -47,7 +49,47 @@ struct SettingsView: View {
                     } header: {
                         Text("Game Settings")
                     }
-                    
+
+                    // Notifications
+                    Section {
+                        Toggle(isOn: $notificationManager.notificationsEnabled) {
+                            Label("Daily Reminders", systemImage: "bell.badge")
+                        }
+                        .onChange(of: notificationManager.notificationsEnabled) { _, newValue in
+                            if newValue && !notificationManager.isAuthorized {
+                                notificationManager.requestAuthorization()
+                            }
+                        }
+
+                        if notificationManager.notificationsEnabled {
+                            Button(action: {
+                                showingTimePicker = true
+                            }) {
+                                HStack {
+                                    Label("Reminder Time", systemImage: "clock")
+                                    Spacer()
+                                    Text(notificationManager.formattedReminderTime)
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+
+                        if !notificationManager.isAuthorized && notificationManager.notificationsEnabled {
+                            Button(action: {
+                                if let settingsURL = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(settingsURL)
+                                }
+                            }) {
+                                Label("Enable in Settings", systemImage: "gear")
+                                    .foregroundColor(.orange)
+                            }
+                        }
+                    } header: {
+                        Text("Notifications")
+                    } footer: {
+                        Text("Get daily brain training reminders with fun messages to keep your streak alive!")
+                    }
+
                     // Game Center
                     Section {
                         Button(action: {
@@ -211,7 +253,75 @@ struct SettingsView: View {
             } message: {
                 Text("This will delete all your progress. This action cannot be undone.")
             }
+            .sheet(isPresented: $showingTimePicker) {
+                TimePickerSheet(
+                    hour: $notificationManager.reminderHour,
+                    minute: $notificationManager.reminderMinute
+                )
+            }
         }
+    }
+}
+
+// MARK: - Time Picker Sheet
+
+struct TimePickerSheet: View {
+    @Binding var hour: Int
+    @Binding var minute: Int
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var selectedTime: Date
+
+    init(hour: Binding<Int>, minute: Binding<Int>) {
+        _hour = hour
+        _minute = minute
+        // Initialize with the current values
+        var components = DateComponents()
+        components.hour = hour.wrappedValue
+        components.minute = minute.wrappedValue
+        _selectedTime = State(initialValue: Calendar.current.date(from: components) ?? Date())
+    }
+
+    var body: some View {
+        NavigationStack {
+            VStack {
+                DatePicker(
+                    "Reminder Time",
+                    selection: $selectedTime,
+                    displayedComponents: .hourAndMinute
+                )
+                .datePickerStyle(.wheel)
+                .labelsHidden()
+                .padding()
+
+                Text("We'll send you a fun reminder at this time each day")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                Spacer()
+            }
+            .navigationTitle("Reminder Time")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .cancellationAction) {
+                    Button("Cancel") {
+                        dismiss()
+                    }
+                }
+                ToolbarItem(placement: .confirmationAction) {
+                    Button("Save") {
+                        let components = Calendar.current.dateComponents([.hour, .minute], from: selectedTime)
+                        hour = components.hour ?? 19
+                        minute = components.minute ?? 0
+                        HapticManager.shared.notification(.success)
+                        dismiss()
+                    }
+                }
+            }
+        }
+        .presentationDetents([.medium])
     }
 }
 

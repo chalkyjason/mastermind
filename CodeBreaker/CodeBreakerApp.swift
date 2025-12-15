@@ -4,13 +4,14 @@ import SwiftUI
 struct CodeBreakerApp: App {
     @StateObject private var gameManager = GameManager()
     @StateObject private var gameCenterManager = GameCenterManager()
+    @StateObject private var livesManager = LivesManager.shared
+    @StateObject private var notificationManager = NotificationManager.shared
+    @Environment(\.scenePhase) private var scenePhase
 
     init() {
         // Initialize Google Mobile Ads SDK
         AdManager.configure()
     }
-    // NOTE: If you see "Cannot find 'LivesManager' in scope", ensure that 'LivesManager.swift' is included in your target. No import is necessary if it is part of the same module.
-    @StateObject private var livesManager = LivesManager.shared
 
     var body: some Scene {
         WindowGroup {
@@ -20,7 +21,21 @@ struct CodeBreakerApp: App {
                 .environmentObject(livesManager)
                 .onAppear {
                     gameCenterManager.authenticatePlayer()
+                    // Request notification permissions on first launch
+                    notificationManager.requestAuthorization()
                 }
+        }
+        .onChange(of: scenePhase) { _, newPhase in
+            switch newPhase {
+            case .active:
+                notificationManager.appDidBecomeActive()
+            case .background:
+                notificationManager.appDidEnterBackground()
+            case .inactive:
+                break
+            @unknown default:
+                break
+            }
         }
     }
 }

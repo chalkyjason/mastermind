@@ -109,13 +109,16 @@ class GameManager: ObservableObject {
         
         // Update streak
         updateStreakOnWin()
-        
+
         // Recalculate stats
         calculateStats()
-        
+
         // Save progress
         saveData()
-        
+
+        // Notify notification manager that user played
+        NotificationManager.shared.userDidPlay()
+
         // Report to Game Center
         if stars > previousStars {
             GameCenterManager.shared.reportLevelCompletion(levelId: levelId, stars: stars)
@@ -166,12 +169,15 @@ class GameManager: ObservableObject {
         
         dailyChallenge = challenge
         completedDailyChallenges.append(challenge)
-        
+
         // Update streak
         updateStreakOnWin()
-        
+
         saveData()
-        
+
+        // Notify notification manager that user played
+        NotificationManager.shared.userDidPlay()
+
         // Report to Game Center
         GameCenterManager.shared.reportDailyChallengeCompletion(stars: stars)
     }
