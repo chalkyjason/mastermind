@@ -11,6 +11,7 @@
 		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
 		7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE32EEB0500001B8143 /* AdManager.swift */; };
 		7921ADE62EEB0510001B8143 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE52EEB0510001B8143 /* NotificationManager.swift */; };
+		B1000001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B2000001 /* GoogleMobileAds */; };
 		799256772EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */; };
 		799256792EE753F4006215AA /* Assets.xcassetsContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256782EE753F4006215AA /* Assets.xcassetsContents.json */; };
 		A1000001 /* CodeBreakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CodeBreakerApp.swift */; };
@@ -58,6 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B1000001 /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -179,6 +181,9 @@
 			dependencies = (
 			);
 			name = CodeBreaker;
+			packageProductDependencies = (
+				B2000001 /* GoogleMobileAds */,
+			);
 			productName = CodeBreaker;
 			productReference = A3000001 /* CodeBreaker.app */;
 			productType = "com.apple.product-type.application";
@@ -207,6 +212,9 @@
 				Base,
 			);
 			mainGroup = A5000001;
+			packageReferences = (
+				B3000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			productRefGroup = A5000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -390,6 +398,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CodeBreaker/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -418,6 +427,7 @@
 				DEVELOPMENT_ASSET_PATHS = "";
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = CodeBreaker/Info.plist;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -458,6 +468,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		B3000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 11.0.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		B2000001 /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = B3000001 /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA000001 /* Project object */;
 }
