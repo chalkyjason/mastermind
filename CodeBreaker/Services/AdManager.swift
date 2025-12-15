@@ -1,25 +1,28 @@
 import Foundation
 import UIKit
+import GoogleMobileAds
 
 // MARK: - Ad Manager
-// Note: This is a stub implementation. To enable real ads:
-// 1. Add Google Mobile Ads SDK via Swift Package Manager
-// 2. Uncomment the GoogleMobileAds import and GAD* code
-// 3. Configure your Ad Unit IDs in App Store Connect
 
 class AdManager: NSObject, ObservableObject {
     static let shared = AdManager()
 
-    // Ad Unit IDs - Replace with your own before release
-    // Test ID: "ca-app-pub-3940256099942544/5224354917"
-    // Production ID: "ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX"
-    private let rewardedAdUnitID = "ca-app-pub-3940256099942544/5224354917"
+    // MARK: - Ad Unit IDs
 
-    // Published state
+    // Production rewarded ad unit ID
+    private let rewardedAdUnitID = "ca-app-pub-3531459586407787/1644851557"
+
+    // Test ad unit ID (use during development)
+    // private let rewardedAdUnitID = "ca-app-pub-3940256099942544/1712485313"
+
+    // MARK: - Published State
+
     @Published var isRewardedAdReady = false
     @Published var isLoadingAd = false
 
-    // Completion handler for reward
+    // MARK: - Private Properties
+
+    private var rewardedAd: GADRewardedAd?
     private var rewardCompletion: ((Bool) -> Void)?
 
     private override init() {
@@ -29,15 +32,16 @@ class AdManager: NSObject, ObservableObject {
     // MARK: - SDK Initialization
 
     static func configure() {
-        // Stub: In production, initialize Google Mobile Ads SDK here
-        // GADMobileAds.sharedInstance().start { status in ... }
-        #if DEBUG
-        print("AdManager: Stub mode - ads disabled")
-        #endif
+        GADMobileAds.sharedInstance().start { status in
+            #if DEBUG
+            print("AdManager: Google Mobile Ads SDK initialized")
+            for adapter in status.adapterStatusesByClassName {
+                print("  - \(adapter.key): \(adapter.value.state.rawValue)")
+            }
+            #endif
 
-        // Simulate ad being ready after a delay (for testing UI flow)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-            AdManager.shared.isRewardedAdReady = true
+            // Load first rewarded ad after initialization
+            AdManager.shared.loadRewardedAd()
         }
     }
 
@@ -48,20 +52,39 @@ class AdManager: NSObject, ObservableObject {
 
         isLoadingAd = true
 
-        // Stub: Simulate loading delay
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            self?.isLoadingAd = false
-            self?.isRewardedAdReady = true
-            #if DEBUG
-            print("AdManager: Stub - rewarded ad 'loaded'")
-            #endif
+        #if DEBUG
+        print("AdManager: Loading rewarded ad...")
+        #endif
+
+        GADRewardedAd.load(withAdUnitID: rewardedAdUnitID, request: GADRequest()) { [weak self] ad, error in
+            guard let self = self else { return }
+
+            DispatchQueue.main.async {
+                self.isLoadingAd = false
+
+                if let error = error {
+                    #if DEBUG
+                    print("AdManager: Failed to load rewarded ad: \(error.localizedDescription)")
+                    #endif
+                    self.isRewardedAdReady = false
+                    return
+                }
+
+                self.rewardedAd = ad
+                self.rewardedAd?.fullScreenContentDelegate = self
+                self.isRewardedAdReady = true
+
+                #if DEBUG
+                print("AdManager: Rewarded ad loaded successfully")
+                #endif
+            }
         }
     }
 
     func showRewardedAd(from viewController: UIViewController? = nil, completion: @escaping (Bool) -> Void) {
-        guard isRewardedAdReady else {
+        guard isRewardedAdReady, let rewardedAd = rewardedAd else {
             #if DEBUG
-            print("AdManager: Stub - rewarded ad not ready")
+            print("AdManager: Rewarded ad not ready")
             #endif
             completion(false)
             loadRewardedAd()
@@ -70,23 +93,24 @@ class AdManager: NSObject, ObservableObject {
 
         rewardCompletion = completion
 
-        // Stub: Simulate showing an ad by immediately granting reward
-        // In production, this would present the actual ad
-        #if DEBUG
-        print("AdManager: Stub - simulating ad view, granting reward")
-        #endif
+        guard let rootVC = viewController ?? getRootViewController() else {
+            #if DEBUG
+            print("AdManager: Could not find root view controller")
+            #endif
+            completion(false)
+            return
+        }
 
-        // Simulate a brief delay as if watching an ad
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) { [weak self] in
-            // Trigger haptic feedback for reward
+        rewardedAd.present(fromRootViewController: rootVC) { [weak self] in
+            // User earned reward
+            let reward = rewardedAd.adReward
+            #if DEBUG
+            print("AdManager: User earned reward - \(reward.amount) \(reward.type)")
+            #endif
+
             HapticManager.shared.notification(.success)
-
             self?.rewardCompletion?(true)
             self?.rewardCompletion = nil
-            self?.isRewardedAdReady = false
-
-            // Pre-load next ad
-            self?.loadRewardedAd()
         }
     }
 
@@ -103,5 +127,38 @@ class AdManager: NSObject, ObservableObject {
         }
 
         return topController
+    }
+}
+
+// MARK: - GADFullScreenContentDelegate
+
+extension AdManager: GADFullScreenContentDelegate {
+    func adDidDismissFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+        #if DEBUG
+        print("AdManager: Ad dismissed")
+        #endif
+
+        // Reset state and pre-load next ad
+        isRewardedAdReady = false
+        rewardedAd = nil
+        loadRewardedAd()
+    }
+
+    func ad(_ ad: GADFullScreenPresentingAd, didFailToPresentFullScreenContentWithError error: Error) {
+        #if DEBUG
+        print("AdManager: Failed to present ad: \(error.localizedDescription)")
+        #endif
+
+        rewardCompletion?(false)
+        rewardCompletion = nil
+        isRewardedAdReady = false
+        rewardedAd = nil
+        loadRewardedAd()
+    }
+
+    func adWillPresentFullScreenContent(_ ad: GADFullScreenPresentingAd) {
+        #if DEBUG
+        print("AdManager: Ad will present")
+        #endif
     }
 }
