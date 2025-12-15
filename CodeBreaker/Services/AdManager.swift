@@ -10,10 +10,10 @@ class AdManager: NSObject, ObservableObject {
     // MARK: - Ad Unit IDs
 
     // Production rewarded ad unit ID
-    private let rewardedAdUnitID = "ca-app-pub-3531459586407787/1644851557"
+    //private let rewardedAdUnitID = "ca-app-pub-3531459586407787/1644851557"
 
     // Test ad unit ID (use during development)
-    // private let rewardedAdUnitID = "ca-app-pub-3940256099942544/1712485313"
+     private let rewardedAdUnitID = "ca-app-pub-3940256099942544/1712485313"
 
     // MARK: - Published State
 
