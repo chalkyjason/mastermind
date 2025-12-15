@@ -120,36 +120,26 @@ class LivesManager: ObservableObject {
         #endif
     }
 
-    // MARK: - Ad Reward Placeholder
+    // MARK: - Ad Reward Integration
 
     /// Called when user wants to watch an ad for a life
-    /// Returns true if ad system is available
+    /// Returns true if ad system is available and ad was watched
     func requestAdForLife(completion: @escaping (Bool) -> Void) {
-        // TODO: Integrate with actual ad SDK (AdMob, Unity Ads, etc.)
-        // For now, this is a placeholder that simulates ad completion
-
-        #if DEBUG
-        print("Lives: Ad requested - placeholder implementation")
-        // In debug, simulate successful ad after 1 second
-        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { [weak self] in
-            self?.addLife()
-            completion(true)
+        AdManager.shared.showRewardedAd { [weak self] success in
+            if success {
+                // User watched the ad and earned a reward
+                self?.addLife()
+                completion(true)
+            } else {
+                // User closed ad early or ad failed to load
+                completion(false)
+            }
         }
-        #else
-        // In production, this would call the actual ad SDK
-        // For now, return false indicating ads aren't configured
-        completion(false)
-        #endif
     }
 
     /// Check if ad reward is available
     var isAdAvailable: Bool {
-        // TODO: Check with actual ad SDK if a rewarded ad is loaded
-        #if DEBUG
-        return true
-        #else
-        return false // Placeholder until ad SDK is integrated
-        #endif
+        return AdManager.shared.isRewardedAdReady
     }
 
     // MARK: - Regeneration
