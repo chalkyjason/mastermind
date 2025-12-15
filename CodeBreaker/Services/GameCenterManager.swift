@@ -122,7 +122,15 @@ class GameCenterManager: ObservableObject {
     func reportDailyChallengeCompletion(stars: Int) {
         // Could track a daily challenge completion streak here
     }
-    
+
+    func reportBallSortCompletion(levelId: Int, stars: Int) {
+        // Report Ball Sort level completion
+        // Could have a separate leaderboard for Ball Sort if desired
+        #if DEBUG
+        print("Ball Sort level \(levelId) completed with \(stars) stars")
+        #endif
+    }
+
     // MARK: - Achievements
     
     func unlockAchievement(_ achievement: AchievementID, percentComplete: Double = 100.0) {

@@ -4,6 +4,7 @@ struct ContentView: View {
     @EnvironmentObject var gameManager: GameManager
     @State private var showingGame = false
     @State private var showingLevelSelect = false
+    @State private var showingBallSort = false
     @State private var showingDailyChallenge = false
     @State private var showingSettings = false
     @State private var showingHowToPlay = false
@@ -24,7 +25,7 @@ struct ContentView: View {
                     
                     // Logo/Title
                     VStack(spacing: 8) {
-                        Text("CODE")
+                        Text("PUZZLE")
                             .font(.system(size: 56, weight: .black, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
@@ -33,7 +34,7 @@ struct ContentView: View {
                                     endPoint: .bottom
                                 )
                             )
-                        Text("BREAKER")
+                        Text("MASTER")
                             .font(.system(size: 56, weight: .black, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
@@ -56,14 +57,23 @@ struct ContentView: View {
                     VStack(spacing: 16) {
                         // NOTE: If you see "Cannot find 'SoundManager' in scope", ensure that 'SoundManager.swift' is included in your target. No import is necessary if it is part of the same module.
                         MenuButton(
-                            title: "Play",
-                            icon: "play.fill",
+                            title: "Code Breaker",
+                            icon: "lock.circle.fill",
                             color: Color("AccentGreen")
                         ) {
                             SoundManager.shared.buttonTap()
                             showingLevelSelect = true
                         }
-                        
+
+                        MenuButton(
+                            title: "Ball Sort",
+                            icon: "testtube.2",
+                            color: Color("AccentBlue")
+                        ) {
+                            SoundManager.shared.buttonTap()
+                            showingBallSort = true
+                        }
+
                         MenuButton(
                             title: "Daily Challenge",
                             icon: "calendar.badge.clock",
@@ -73,16 +83,16 @@ struct ContentView: View {
                             SoundManager.shared.buttonTap()
                             showingDailyChallenge = true
                         }
-                        
+
                         HStack(spacing: 16) {
                             SmallMenuButton(
                                 title: "How to Play",
                                 icon: "questionmark.circle.fill",
-                                color: Color("AccentBlue")
+                                color: Color("AccentOrange")
                             ) {
                                 showingHowToPlay = true
                             }
-                            
+
                             SmallMenuButton(
                                 title: "Settings",
                                 icon: "gearshape.fill",
@@ -104,6 +114,9 @@ struct ContentView: View {
             }
             .navigationDestination(isPresented: $showingLevelSelect) {
                 LevelSelectView()
+            }
+            .navigationDestination(isPresented: $showingBallSort) {
+                BallSortLevelSelectView()
             }
             .navigationDestination(isPresented: $showingDailyChallenge) {
                 DailyChallengeView()
