@@ -9,6 +9,8 @@
 /* Begin PBXBuildFile section */
 		7921ADE02EEB043D001B8143 /* LivesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADDF2EEB043D001B8143 /* LivesManager.swift */; };
 		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
+		7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE32EEB0500001B8143 /* AdManager.swift */; };
+		7921ADE62EEB0510001B8143 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE52EEB0510001B8143 /* NotificationManager.swift */; };
 		799256772EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */; };
 		799256792EE753F4006215AA /* Assets.xcassetsContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256782EE753F4006215AA /* Assets.xcassetsContents.json */; };
 		A1000001 /* CodeBreakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CodeBreakerApp.swift */; };
@@ -30,6 +32,8 @@
 /* Begin PBXFileReference section */
 		7921ADDF2EEB043D001B8143 /* LivesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivesManager.swift; sourceTree = "<group>"; };
 		7921ADE12EEB04F6001B8143 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		7921ADE32EEB0500001B8143 /* AdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdManager.swift; sourceTree = "<group>"; };
+		7921ADE52EEB0510001B8143 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
 		799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsAppIcon.appiconsetContents.json; sourceTree = "<group>"; };
 		799256782EE753F4006215AA /* Assets.xcassetsContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsContents.json; sourceTree = "<group>"; };
 		A2000001 /* CodeBreakerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBreakerApp.swift; sourceTree = "<group>"; };
@@ -77,7 +81,6 @@
 				A5000006 /* Views */,
 				A5000007 /* Services */,
 				A5000008 /* Resources */,
-				7921ADDF2EEB043D001B8143 /* LivesManager.swift */,
 			);
 			path = CodeBreaker;
 			sourceTree = "<group>";
@@ -113,7 +116,6 @@
 				A2000002 /* ContentView.swift */,
 				A5000009 /* Game */,
 				A5000010 /* Menu */,
-				7921ADE12EEB04F6001B8143 /* SoundManager.swift */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -123,6 +125,10 @@
 			children = (
 				A2000006 /* HapticManager.swift */,
 				A2000007 /* GameCenterManager.swift */,
+				7921ADE32EEB0500001B8143 /* AdManager.swift */,
+				7921ADE52EEB0510001B8143 /* NotificationManager.swift */,
+				7921ADDF2EEB043D001B8143 /* LivesManager.swift */,
+				7921ADE12EEB04F6001B8143 /* SoundManager.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -243,6 +249,8 @@
 				A1000012 /* SettingsView.swift in Sources */,
 				A1000013 /* HowToPlayView.swift in Sources */,
 				7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */,
+				7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */,
+				7921ADE62EEB0510001B8143 /* NotificationManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
