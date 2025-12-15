@@ -8,7 +8,11 @@
 
 /* Begin PBXBuildFile section */
 		7921ADE02EEB043D001B8143 /* LivesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADDF2EEB043D001B8143 /* LivesManager.swift */; };
-		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
+		796AE24D2EF0674700C353DE /* LivesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796AE24C2EF0674700C353DE /* LivesManager.swift */; };
+		796AE24F2EF0675F00C353DE /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796AE24E2EF0675F00C353DE /* NotificationManager.swift */; };
+		796AE2512EF0677600C353DE /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796AE2502EF0677600C353DE /* AdManager.swift */; };
+		796AE2532EF067DD00C353DE /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 796AE2522EF067DD00C353DE /* SoundManager.swift */; };
+		796AE2562EF06A0C00C353DE /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = 796AE2552EF06A0C00C353DE /* GoogleMobileAds */; };
 		799256772EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */; };
 		799256792EE753F4006215AA /* Assets.xcassetsContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256782EE753F4006215AA /* Assets.xcassetsContents.json */; };
 		A1000001 /* CodeBreakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CodeBreakerApp.swift */; };
@@ -30,6 +34,10 @@
 /* Begin PBXFileReference section */
 		7921ADDF2EEB043D001B8143 /* LivesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivesManager.swift; sourceTree = "<group>"; };
 		7921ADE12EEB04F6001B8143 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
+		796AE24C2EF0674700C353DE /* LivesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LivesManager.swift; sourceTree = "<group>"; };
+		796AE24E2EF0675F00C353DE /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		796AE2502EF0677600C353DE /* AdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdManager.swift; sourceTree = "<group>"; };
+		796AE2522EF067DD00C353DE /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsAppIcon.appiconsetContents.json; sourceTree = "<group>"; };
 		799256782EE753F4006215AA /* Assets.xcassetsContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsContents.json; sourceTree = "<group>"; };
 		A2000001 /* CodeBreakerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBreakerApp.swift; sourceTree = "<group>"; };
@@ -54,6 +62,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				796AE2562EF06A0C00C353DE /* GoogleMobileAds in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -78,6 +87,10 @@
 				A5000007 /* Services */,
 				A5000008 /* Resources */,
 				7921ADDF2EEB043D001B8143 /* LivesManager.swift */,
+				796AE24C2EF0674700C353DE /* LivesManager.swift */,
+				796AE24E2EF0675F00C353DE /* NotificationManager.swift */,
+				796AE2502EF0677600C353DE /* AdManager.swift */,
+				796AE2522EF067DD00C353DE /* SoundManager.swift */,
 			);
 			path = CodeBreaker;
 			sourceTree = "<group>";
@@ -201,6 +214,9 @@
 				Base,
 			);
 			mainGroup = A5000001;
+			packageReferences = (
+				796AE2542EF06A0C00C353DE /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */,
+			);
 			productRefGroup = A5000003 /* Products */;
 			projectDirPath = "";
 			projectRoot = "";
@@ -228,7 +244,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				796AE2512EF0677600C353DE /* AdManager.swift in Sources */,
 				A1000001 /* CodeBreakerApp.swift in Sources */,
+				796AE24F2EF0675F00C353DE /* NotificationManager.swift in Sources */,
 				A1000002 /* ContentView.swift in Sources */,
 				A1000003 /* GameTypes.swift in Sources */,
 				A1000004 /* MastermindGame.swift in Sources */,
@@ -239,10 +257,11 @@
 				A1000009 /* GameOverlays.swift in Sources */,
 				A1000010 /* LevelSelectView.swift in Sources */,
 				A1000011 /* DailyChallengeView.swift in Sources */,
+				796AE24D2EF0674700C353DE /* LivesManager.swift in Sources */,
 				7921ADE02EEB043D001B8143 /* LivesManager.swift in Sources */,
 				A1000012 /* SettingsView.swift in Sources */,
 				A1000013 /* HowToPlayView.swift in Sources */,
-				7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */,
+				796AE2532EF067DD00C353DE /* SoundManager.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -450,6 +469,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		796AE2542EF06A0C00C353DE /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/googleads/swift-package-manager-google-mobile-ads.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 12.14.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		796AE2552EF06A0C00C353DE /* GoogleMobileAds */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 796AE2542EF06A0C00C353DE /* XCRemoteSwiftPackageReference "swift-package-manager-google-mobile-ads" */;
+			productName = GoogleMobileAds;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AA000001 /* Project object */;
 }

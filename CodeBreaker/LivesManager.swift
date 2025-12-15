@@ -1,99 +1,176 @@
 import Foundation
 import SwiftUI
 
+// MARK: - Lives Manager
+
 class LivesManager: ObservableObject {
     static let shared = LivesManager()
     
-    static let maxLives = 5
+    @Published var lives: Int = 5
+    @Published var nextLifeTime: Date?
     
-    @Published var lives: Int = maxLives
-    @Published var isAdAvailable: Bool = false // Simulate ad availability
+    static let maxLives = 5
+    private let lifeRegenerationMinutes = 30
+    private let defaults = UserDefaults.standard
     
     private var timer: Timer?
-    private var nextRefill: Date?
+    
+    // Keys for UserDefaults
+    private enum Keys {
+        static let lives = "currentLives"
+        static let nextLifeTime = "nextLifeTime"
+    }
     
     var hasLives: Bool {
         lives > 0
     }
     
-    var isFull: Bool {
-        lives >= Self.maxLives
+    var formattedTimeUntilNextLife: String? {
+        guard lives < Self.maxLives, let nextLife = nextLifeTime else { return nil }
+        
+        let now = Date()
+        guard nextLife > now else {
+            regenerateLife()
+            return nil
+        }
+        
+        let timeInterval = nextLife.timeIntervalSince(now)
+        let minutes = Int(timeInterval) / 60
+        let seconds = Int(timeInterval) % 60
+        
+        return String(format: "%d:%02d", minutes, seconds)
     }
     
-    var formattedTimeUntilNextLife: String? {
-        guard let next = nextRefill, lives < Self.maxLives else { return nil }
-        let interval = Int(next.timeIntervalSinceNow)
-        guard interval > 0 else { return nil }
-        let minutes = interval / 60
-        let seconds = interval % 60
-        return String(format: "%02d:%02d", minutes, seconds)
-    }
+    // MARK: - Initialization
     
     private init() {
-        // For demo/testing, always have lives on launch
-        lives = Self.maxLives
-        startTimerIfNeeded()
+        loadData()
+        checkLifeRegeneration()
+        startTimer()
     }
+    
+    // MARK: - Life Management
     
     func useLife() {
         guard lives > 0 else { return }
+        
         lives -= 1
-        if lives < Self.maxLives && nextRefill == nil {
-            scheduleNextRefill()
+        
+        // Start regeneration timer if we just went below max lives
+        if lives < Self.maxLives && nextLifeTime == nil {
+            scheduleNextLife()
         }
+        
+        saveData()
     }
     
-    func requestAdForLife(completion: @escaping (Bool) -> Void) {
-        // Simulate ad watching process
-        DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
-            self.lives = min(self.lives + 1, Self.maxLives)
-            completion(true)
-        }
-    }
-    
-    private func scheduleNextRefill() {
-        nextRefill = Date().addingTimeInterval(60 * 30) // 30 mins
-        startTimerIfNeeded()
-    }
-    
-    private func startTimerIfNeeded() {
-        timer?.invalidate()
+    func addLife() {
         guard lives < Self.maxLives else { return }
-        timer = Timer.scheduledTimer(withTimeInterval: 1, repeats: true) { [weak self] _ in
-            self?.checkRefill()
+        
+        lives += 1
+        
+        if lives >= Self.maxLives {
+            nextLifeTime = nil
+            stopTimer()
+        } else if nextLifeTime == nil {
+            scheduleNextLife()
+        }
+        
+        saveData()
+    }
+    
+    private func scheduleNextLife() {
+        nextLifeTime = Date().addingTimeInterval(TimeInterval(lifeRegenerationMinutes * 60))
+        saveData()
+    }
+    
+    private func checkLifeRegeneration() {
+        guard lives < Self.maxLives else {
+            nextLifeTime = nil
+            return
+        }
+        
+        guard let nextLife = nextLifeTime else {
+            scheduleNextLife()
+            return
+        }
+        
+        let now = Date()
+        while nextLife <= now && lives < Self.maxLives {
+            regenerateLife()
         }
     }
     
-    private func checkRefill() {
-        guard let next = nextRefill else { return }
-        if Date() >= next {
-            lives = min(lives + 1, Self.maxLives)
-            if lives < Self.maxLives {
-                scheduleNextRefill()
-            } else {
-                nextRefill = nil
-                timer?.invalidate()
-            }
+    private func regenerateLife() {
+        guard lives < Self.maxLives else {
+            nextLifeTime = nil
+            stopTimer()
+            saveData()
+            return
         }
-        objectWillChange.send()
-    }
-    
-    // Debug/testing controls for Settings
-    #if DEBUG
-    func debugSetLives(_ value: Int) {
-        lives = max(0, min(value, Self.maxLives))
+        
+        lives += 1
+        
         if lives < Self.maxLives {
-            scheduleNextRefill()
+            scheduleNextLife()
         } else {
-            nextRefill = nil
-            timer?.invalidate()
+            nextLifeTime = nil
+            stopTimer()
+        }
+        
+        saveData()
+    }
+    
+    // MARK: - Timer
+    
+    private func startTimer() {
+        guard lives < Self.maxLives else { return }
+        
+        timer?.invalidate()
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { [weak self] _ in
+            self?.checkLifeRegeneration()
+            self?.objectWillChange.send()
         }
     }
     
-    func debugResetLives() {
-        lives = Self.maxLives
-        nextRefill = nil
+    private func stopTimer() {
         timer?.invalidate()
+        timer = nil
     }
-    #endif
+    
+    // MARK: - Persistence
+    
+    private func saveData() {
+        defaults.set(lives, forKey: Keys.lives)
+        defaults.set(nextLifeTime, forKey: Keys.nextLifeTime)
+    }
+    
+    private func loadData() {
+        lives = defaults.integer(forKey: Keys.lives)
+        if lives == 0 {
+            lives = Self.maxLives // First launch
+        }
+        nextLifeTime = defaults.object(forKey: Keys.nextLifeTime) as? Date
+    }
+    
+    // MARK: - App Lifecycle
+    
+    func appDidBecomeActive() {
+        checkLifeRegeneration()
+        startTimer()
+    }
+    
+    func appDidEnterBackground() {
+        stopTimer()
+        saveData()
+    }
+    
+    // MARK: - Debug/Reset
+    
+    func resetLives() {
+        lives = Self.maxLives
+        nextLifeTime = nil
+        stopTimer()
+        saveData()
+    }
 }

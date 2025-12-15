@@ -270,7 +270,13 @@ struct GameView: View {
     }
     
     private func handleWatchAd() {
-        adManager.showRewardedAd { [self] success in
+        guard let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+              let rootViewController = windowScene.windows.first?.rootViewController else {
+            print("Could not find root view controller")
+            return
+        }
+        
+        adManager.showRewardedAd(from: rootViewController) { [self] success in
             if success {
                 // User watched the ad and earned a reward
                 withAnimation {
@@ -535,7 +541,7 @@ struct FeedbackPegsView: View {
                     .scaleEffect(shouldAnimate && revealedIndices.contains(index) ? 1 : (shouldAnimate ? 0 : 1))
                     .opacity(shouldAnimate && revealedIndices.contains(index) ? 1 : (shouldAnimate ? 0 : 1))
                     .animation(
-                        shouldAnimate ? .spring(response: 0.4, dampingFraction: 0.6).delay(Double(index) * 0.1) : nil,
+                        shouldAnimate ? Animation.spring(response: 0.4, dampingFraction: 0.6).delay(Double(index) * 0.1) : nil,
                         value: revealedIndices
                     )
             }
