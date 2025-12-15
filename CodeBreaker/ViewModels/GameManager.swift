@@ -11,9 +11,14 @@ class GameManager: ObservableObject {
     @Published var levelsCompleted: Int = 0
     @Published var dailyChallenge: DailyChallenge?
     @Published var completedDailyChallenges: [DailyChallenge] = []
-    
+
+    // Ball Sort
+    @Published var ballSortLevels: [BallSortLevel] = []
+    @Published var ballSortTotalStars: Int = 0
+    @Published var ballSortLevelsCompleted: Int = 0
+
     private let defaults = UserDefaults.standard
-    
+
     // Keys for UserDefaults
     private enum Keys {
         static let levels = "savedLevels"
@@ -21,6 +26,7 @@ class GameManager: ObservableObject {
         static let longestStreak = "longestStreak"
         static let lastPlayedDate = "lastPlayedDate"
         static let dailyChallenges = "completedDailyChallenges"
+        static let ballSortLevels = "ballSortLevels"
     }
     
     var hasDailyChallengeAvailable: Bool {
@@ -29,10 +35,11 @@ class GameManager: ObservableObject {
     }
     
     // MARK: - Initialization
-    
+
     init() {
         loadData()
         generateLevels()
+        generateBallSortLevels()
         checkDailyChallenge()
         updateStreak()
     }
@@ -162,11 +169,11 @@ class GameManager: ObservableObject {
     
     func completeDailyChallenge(attempts: Int, stars: Int) {
         guard var challenge = dailyChallenge else { return }
-        
+
         challenge.completed = true
         challenge.attempts = attempts
         challenge.stars = stars
-        
+
         dailyChallenge = challenge
         completedDailyChallenges.append(challenge)
 
@@ -181,7 +188,112 @@ class GameManager: ObservableObject {
         // Report to Game Center
         GameCenterManager.shared.reportDailyChallengeCompletion(stars: stars)
     }
-    
+
+    // MARK: - Ball Sort Level Generation
+
+    private func generateBallSortLevels() {
+        // Only generate if we don't have saved levels
+        guard ballSortLevels.isEmpty else {
+            calculateBallSortStats()
+            return
+        }
+
+        var allLevels: [BallSortLevel] = []
+        var levelId = 0
+
+        for difficulty in BallSortDifficulty.allCases {
+            for levelNum in 1...difficulty.levelsCount {
+                let isUnlocked = difficulty == .easy && levelNum == 1
+                let level = BallSortLevel(
+                    id: levelId,
+                    difficulty: difficulty,
+                    levelInDifficulty: levelNum,
+                    isUnlocked: isUnlocked
+                )
+                allLevels.append(level)
+                levelId += 1
+            }
+        }
+
+        ballSortLevels = allLevels
+        saveData()
+        calculateBallSortStats()
+    }
+
+    // MARK: - Ball Sort Level Progression
+
+    func ballSortLevels(for difficulty: BallSortDifficulty) -> [BallSortLevel] {
+        ballSortLevels.filter { $0.difficulty == difficulty }
+    }
+
+    func completeBallSortLevel(_ levelId: Int, stars: Int, moves: Int) {
+        guard let index = ballSortLevels.firstIndex(where: { $0.id == levelId }) else { return }
+
+        let previousStars = ballSortLevels[index].stars
+
+        // Update stars if better
+        if stars > ballSortLevels[index].stars {
+            ballSortLevels[index].stars = stars
+        }
+
+        // Update best moves if better
+        if let bestMoves = ballSortLevels[index].bestMoves {
+            if moves < bestMoves {
+                ballSortLevels[index].bestMoves = moves
+            }
+        } else {
+            ballSortLevels[index].bestMoves = moves
+        }
+
+        // Unlock next level
+        if index + 1 < ballSortLevels.count && !ballSortLevels[index + 1].isUnlocked {
+            ballSortLevels[index + 1].isUnlocked = true
+
+            // Check if we're unlocking a new difficulty
+            let currentDifficulty = ballSortLevels[index].difficulty
+            let nextDifficulty = ballSortLevels[index + 1].difficulty
+            if currentDifficulty != nextDifficulty {
+                HapticManager.shared.tierUnlocked()
+            } else {
+                HapticManager.shared.levelUnlocked()
+            }
+        }
+
+        // Update streak
+        updateStreakOnWin()
+
+        // Recalculate stats
+        calculateBallSortStats()
+
+        // Save progress
+        saveData()
+
+        // Notify notification manager that user played
+        NotificationManager.shared.userDidPlay()
+
+        // Report to Game Center
+        if stars > previousStars {
+            GameCenterManager.shared.reportBallSortCompletion(levelId: levelId, stars: stars)
+        }
+    }
+
+    func isBallSortDifficultyUnlocked(_ difficulty: BallSortDifficulty) -> Bool {
+        ballSortLevels.first(where: { $0.difficulty == difficulty })?.isUnlocked ?? false
+    }
+
+    func ballSortDifficultyProgress(_ difficulty: BallSortDifficulty) -> (completed: Int, total: Int, stars: Int, maxStars: Int) {
+        let difficultyLevels = ballSortLevels(for: difficulty)
+        let completed = difficultyLevels.filter { $0.stars > 0 }.count
+        let stars = difficultyLevels.reduce(0) { $0 + $1.stars }
+        let maxStars = difficultyLevels.count * 3
+        return (completed, difficultyLevels.count, stars, maxStars)
+    }
+
+    private func calculateBallSortStats() {
+        ballSortTotalStars = ballSortLevels.reduce(0) { $0 + $1.stars }
+        ballSortLevelsCompleted = ballSortLevels.filter { $0.stars > 0 }.count
+    }
+
     // MARK: - Streak Management
     
     private func updateStreak() {
@@ -244,43 +356,54 @@ class GameManager: ObservableObject {
     }
     
     // MARK: - Persistence
-    
+
     private func saveData() {
         // Save levels
         if let encoded = try? JSONEncoder().encode(levels) {
             defaults.set(encoded, forKey: Keys.levels)
         }
-        
+
         // Save streak
         defaults.set(currentStreak, forKey: Keys.currentStreak)
         defaults.set(longestStreak, forKey: Keys.longestStreak)
-        
+
         // Save daily challenges
         if let encoded = try? JSONEncoder().encode(completedDailyChallenges) {
             defaults.set(encoded, forKey: Keys.dailyChallenges)
         }
+
+        // Save Ball Sort levels
+        if let encoded = try? JSONEncoder().encode(ballSortLevels) {
+            defaults.set(encoded, forKey: Keys.ballSortLevels)
+        }
     }
-    
+
     private func loadData() {
         // Load levels
         if let data = defaults.data(forKey: Keys.levels),
            let decoded = try? JSONDecoder().decode([GameLevel].self, from: data) {
             levels = decoded
         }
-        
+
         // Load streak
         currentStreak = defaults.integer(forKey: Keys.currentStreak)
         longestStreak = defaults.integer(forKey: Keys.longestStreak)
-        
+
         // Load daily challenges
         if let data = defaults.data(forKey: Keys.dailyChallenges),
            let decoded = try? JSONDecoder().decode([DailyChallenge].self, from: data) {
             completedDailyChallenges = decoded
         }
+
+        // Load Ball Sort levels
+        if let data = defaults.data(forKey: Keys.ballSortLevels),
+           let decoded = try? JSONDecoder().decode([BallSortLevel].self, from: data) {
+            ballSortLevels = decoded
+        }
     }
     
     // MARK: - Debug/Reset
-    
+
     func resetAllProgress() {
         levels = []
         currentStreak = 0
@@ -288,14 +411,21 @@ class GameManager: ObservableObject {
         totalStars = 0
         levelsCompleted = 0
         completedDailyChallenges = []
-        
+
+        // Reset Ball Sort
+        ballSortLevels = []
+        ballSortTotalStars = 0
+        ballSortLevelsCompleted = 0
+
         defaults.removeObject(forKey: Keys.levels)
         defaults.removeObject(forKey: Keys.currentStreak)
         defaults.removeObject(forKey: Keys.longestStreak)
         defaults.removeObject(forKey: Keys.lastPlayedDate)
         defaults.removeObject(forKey: Keys.dailyChallenges)
-        
+        defaults.removeObject(forKey: Keys.ballSortLevels)
+
         generateLevels()
+        generateBallSortLevels()
         checkDailyChallenge()
     }
 }

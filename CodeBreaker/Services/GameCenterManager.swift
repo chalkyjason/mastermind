@@ -9,6 +9,11 @@ class GameCenterManager: ObservableObject {
     @Published var isAuthenticated = false
     @Published var localPlayer: GKLocalPlayer?
     @Published var showingGameCenter = false
+    @Published var authenticationError: String?
+    
+    var isGameCenterEnabled: Bool {
+        return GKLocalPlayer.local.isAuthenticated
+    }
     
     // Leaderboard IDs - configure these in App Store Connect
     enum LeaderboardID: String {
@@ -48,31 +53,48 @@ class GameCenterManager: ObservableObject {
         case dailyDevotee = "com.codebreaker.dailydevotee"
     }
     
-    init() {}
+    init() {
+        // Start authentication immediately
+        authenticatePlayer()
+    }
     
     // MARK: - Authentication
     
     func authenticatePlayer() {
         GKLocalPlayer.local.authenticateHandler = { [weak self] viewController, error in
-            if let vc = viewController {
-                // Present the Game Center login view controller
-                if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-                   let rootVC = windowScene.windows.first?.rootViewController {
-                    rootVC.present(vc, animated: true)
+            DispatchQueue.main.async {
+                if let vc = viewController {
+                    // Present the Game Center login view controller
+                    // Wait a bit to ensure window hierarchy is ready
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+                        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
+                           let rootVC = windowScene.windows.first?.rootViewController {
+                            // Find the topmost view controller
+                            var topVC = rootVC
+                            while let presented = topVC.presentedViewController {
+                                topVC = presented
+                            }
+                            topVC.present(vc, animated: true)
+                        }
+                    }
+                } else if GKLocalPlayer.local.isAuthenticated {
+                    self?.isAuthenticated = true
+                    self?.localPlayer = GKLocalPlayer.local
+                    self?.authenticationError = nil
+                    #if DEBUG
+                    print("✅ Game Center: Authenticated as \(GKLocalPlayer.local.displayName)")
+                    #endif
+                } else {
+                    self?.isAuthenticated = false
+                    self?.authenticationError = error?.localizedDescription ?? "Game Center not available"
+                    #if DEBUG
+                    if let error = error {
+                        print("❌ Game Center authentication error: \(error.localizedDescription)")
+                    } else {
+                        print("⚠️ Game Center: Not authenticated (user may have disabled it)")
+                    }
+                    #endif
                 }
-            } else if GKLocalPlayer.local.isAuthenticated {
-                self?.isAuthenticated = true
-                self?.localPlayer = GKLocalPlayer.local
-                #if DEBUG
-                print("Game Center: Authenticated as \(GKLocalPlayer.local.displayName)")
-                #endif
-            } else {
-                self?.isAuthenticated = false
-                #if DEBUG
-                if let error = error {
-                    print("Game Center authentication error: \(error.localizedDescription)")
-                }
-                #endif
             }
         }
     }
@@ -80,21 +102,29 @@ class GameCenterManager: ObservableObject {
     // MARK: - Leaderboards
     
     func reportScore(_ score: Int, to leaderboard: LeaderboardID) {
-        guard isAuthenticated else { return }
-        
-        GKLeaderboard.submitScore(
-            score,
-            context: 0,
-            player: GKLocalPlayer.local,
-            leaderboardIDs: [leaderboard.rawValue]
-        ) { error in
+        guard isAuthenticated else {
             #if DEBUG
-            if let error = error {
-                print("Error submitting score: \(error.localizedDescription)")
-            } else {
-                print("Score \(score) submitted to \(leaderboard.rawValue)")
-            }
+            print("⚠️ Cannot report score: Not authenticated")
             #endif
+            return
+        }
+        
+        Task {
+            do {
+                try await GKLeaderboard.submitScore(
+                    score,
+                    context: 0,
+                    player: GKLocalPlayer.local,
+                    leaderboardIDs: [leaderboard.rawValue]
+                )
+                #if DEBUG
+                print("✅ Score \(score) submitted to \(leaderboard.rawValue)")
+                #endif
+            } catch {
+                #if DEBUG
+                print("❌ Error submitting score to \(leaderboard.rawValue): \(error.localizedDescription)")
+                #endif
+            }
         }
     }
     
@@ -122,24 +152,40 @@ class GameCenterManager: ObservableObject {
     func reportDailyChallengeCompletion(stars: Int) {
         // Could track a daily challenge completion streak here
     }
-    
+
+    func reportBallSortCompletion(levelId: Int, stars: Int) {
+        // Report Ball Sort level completion
+        // Could have a separate leaderboard for Ball Sort if desired
+        #if DEBUG
+        print("Ball Sort level \(levelId) completed with \(stars) stars")
+        #endif
+    }
+
     // MARK: - Achievements
     
     func unlockAchievement(_ achievement: AchievementID, percentComplete: Double = 100.0) {
-        guard isAuthenticated else { return }
+        guard isAuthenticated else {
+            #if DEBUG
+            print("⚠️ Cannot unlock achievement: Not authenticated")
+            #endif
+            return
+        }
         
         let gkAchievement = GKAchievement(identifier: achievement.rawValue)
         gkAchievement.percentComplete = percentComplete
         gkAchievement.showsCompletionBanner = true
         
-        GKAchievement.report([gkAchievement]) { error in
-            #if DEBUG
-            if let error = error {
-                print("Error reporting achievement: \(error.localizedDescription)")
-            } else {
-                print("Achievement unlocked: \(achievement.rawValue)")
+        Task {
+            do {
+                try await GKAchievement.report([gkAchievement])
+                #if DEBUG
+                print("✅ Achievement unlocked: \(achievement.rawValue) (\(percentComplete)%)")
+                #endif
+            } catch {
+                #if DEBUG
+                print("❌ Error reporting achievement \(achievement.rawValue): \(error.localizedDescription)")
+                #endif
             }
-            #endif
         }
     }
     
@@ -176,6 +222,9 @@ class GameCenterManager: ObservableObject {
     
     func showLeaderboards() {
         guard isAuthenticated else {
+            #if DEBUG
+            print("⚠️ Cannot show leaderboards: Not authenticated. Attempting re-authentication...")
+            #endif
             authenticatePlayer()
             return
         }
@@ -183,14 +232,14 @@ class GameCenterManager: ObservableObject {
         let gcVC = GKGameCenterViewController(state: .leaderboards)
         gcVC.gameCenterDelegate = GameCenterDelegate.shared
         
-        if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
-           let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(gcVC, animated: true)
-        }
+        presentViewController(gcVC)
     }
     
     func showAchievements() {
         guard isAuthenticated else {
+            #if DEBUG
+            print("⚠️ Cannot show achievements: Not authenticated. Attempting re-authentication...")
+            #endif
             authenticatePlayer()
             return
         }
@@ -198,10 +247,38 @@ class GameCenterManager: ObservableObject {
         let gcVC = GKGameCenterViewController(state: .achievements)
         gcVC.gameCenterDelegate = GameCenterDelegate.shared
         
+        presentViewController(gcVC)
+    }
+    
+    private func presentViewController(_ viewController: UIViewController) {
         if let windowScene = UIApplication.shared.connectedScenes.first as? UIWindowScene,
            let rootVC = windowScene.windows.first?.rootViewController {
-            rootVC.present(gcVC, animated: true)
+            // Find the topmost view controller
+            var topVC = rootVC
+            while let presented = topVC.presentedViewController {
+                topVC = presented
+            }
+            topVC.present(viewController, animated: true)
         }
+    }
+    
+    // MARK: - Debug Helper
+    
+    func getDebugInfo() -> String {
+        var info = "Game Center Debug Info:\n"
+        info += "========================\n"
+        info += "Authenticated: \(isAuthenticated)\n"
+        info += "Local Player Available: \(GKLocalPlayer.local.isAuthenticated)\n"
+        if let player = localPlayer {
+            info += "Player Name: \(player.displayName)\n"
+            info += "Player ID: \(player.gamePlayerID)\n"
+            info += "Team Player ID: \(player.teamPlayerID)\n"
+        }
+        if let error = authenticationError {
+            info += "Error: \(error)\n"
+        }
+        info += "Game Center Enabled: \(isGameCenterEnabled)\n"
+        return info
     }
 }
 

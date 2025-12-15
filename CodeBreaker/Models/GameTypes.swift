@@ -260,6 +260,106 @@ struct DailyChallenge: Codable {
     }
 }
 
+// MARK: - Ball Sort Difficulty
+
+enum BallSortDifficulty: Int, CaseIterable, Codable {
+    case easy = 0
+    case medium = 1
+    case hard = 2
+    case expert = 3
+    
+    var name: String {
+        switch self {
+        case .easy: return "Easy"
+        case .medium: return "Medium"
+        case .hard: return "Hard"
+        case .expert: return "Expert"
+        }
+    }
+    
+    var tubesCount: Int {
+        switch self {
+        case .easy: return 4
+        case .medium: return 5
+        case .hard: return 6
+        case .expert: return 7
+        }
+    }
+    
+    var colorsCount: Int {
+        switch self {
+        case .easy: return 3
+        case .medium: return 4
+        case .hard: return 5
+        case .expert: return 6
+        }
+    }
+    
+    var ballsPerColor: Int {
+        return 4
+    }
+    
+    var emptyTubes: Int {
+        return 2
+    }
+    
+    var levelsCount: Int {
+        switch self {
+        case .easy: return 20
+        case .medium: return 30
+        case .hard: return 40
+        case .expert: return 50
+        }
+    }
+    
+    var iconName: String {
+        switch self {
+        case .easy: return "leaf.fill"
+        case .medium: return "flame.fill"
+        case .hard: return "bolt.fill"
+        case .expert: return "crown.fill"
+        }
+    }
+    
+    var color: Color {
+        switch self {
+        case .easy: return .green
+        case .medium: return .orange
+        case .hard: return .red
+        case .expert: return .purple
+        }
+    }
+}
+
+// MARK: - Ball Sort Level
+
+struct BallSortLevel: Identifiable, Codable {
+    let id: Int
+    let difficulty: BallSortDifficulty
+    let levelInDifficulty: Int
+    var stars: Int = 0
+    var isUnlocked: Bool = false
+    var bestMoves: Int?
+    
+    var displayName: String {
+        "\(difficulty.name) \(levelInDifficulty)"
+    }
+    
+    // Calculate stars based on moves used vs optimal moves
+    static func calculateStars(moves: Int, difficulty: BallSortDifficulty) -> Int {
+        let optimalMoves = difficulty.colorsCount * 2 // Rough estimate
+        let percentage = Double(moves) / Double(optimalMoves)
+        
+        if percentage <= 1.2 {
+            return 3
+        } else if percentage <= 1.5 {
+            return 2
+        } else {
+            return 1
+        }
+    }
+}
+
 // MARK: - Seeded Random Number Generator
 
 struct SeededRandomNumberGenerator: RandomNumberGenerator {

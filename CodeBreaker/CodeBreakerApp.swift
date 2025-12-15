@@ -20,7 +20,6 @@ struct CodeBreakerApp: App {
                 .environmentObject(gameCenterManager)
                 .environmentObject(livesManager)
                 .onAppear {
-                    gameCenterManager.authenticatePlayer()
                     // Request notification permissions on first launch
                     notificationManager.requestAuthorization()
                 }
