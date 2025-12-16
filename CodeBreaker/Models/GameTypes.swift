@@ -1,8 +1,9 @@
 import SwiftUI
+import UniformTypeIdentifiers
 
 // MARK: - Peg Colors
 
-enum PegColor: String, CaseIterable, Codable, Identifiable {
+enum PegColor: String, CaseIterable, Codable, Identifiable, Transferable {
     case red
     case blue
     case green
@@ -43,6 +44,20 @@ enum PegColor: String, CaseIterable, Codable, Identifiable {
         case .pink: return "heart.fill"
         case .cyan: return "pentagon.fill"
         }
+    }
+
+    // MARK: - Transferable Conformance
+
+    static var transferRepresentation: some TransferRepresentation {
+        CodableRepresentation(contentType: .pegColor)
+    }
+}
+
+// MARK: - UTType Extension for PegColor
+
+extension UTType {
+    static var pegColor: UTType {
+        UTType(exportedAs: "com.codebreaker.pegcolor")
     }
 }
 

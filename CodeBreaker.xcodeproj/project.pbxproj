@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		C1000004 /* KnuthSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000004 /* KnuthSolver.swift */; };
+		C1000005 /* TimeAttackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000005 /* TimeAttackView.swift */; };
 		7921ADE02EEB043D001B8143 /* LivesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADDF2EEB043D001B8143 /* LivesManager.swift */; };
 		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
 		7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE32EEB0500001B8143 /* AdManager.swift */; };
@@ -41,6 +43,8 @@
 		C2000001 /* BallSortGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortGame.swift; sourceTree = "<group>"; };
 		C2000002 /* BallSortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortView.swift; sourceTree = "<group>"; };
 		C2000003 /* BallSortLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortLevelSelectView.swift; sourceTree = "<group>"; };
+		C2000004 /* KnuthSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnuthSolver.swift; sourceTree = "<group>"; };
+		C2000005 /* TimeAttackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAttackView.swift; sourceTree = "<group>"; };
 		799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsAppIcon.appiconsetContents.json; sourceTree = "<group>"; };
 		799256782EE753F4006215AA /* Assets.xcassetsContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsContents.json; sourceTree = "<group>"; };
 		79D5DE2C2EF08567004BCA5D /* CodeBreaker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CodeBreaker.entitlements; sourceTree = "<group>"; };
@@ -140,6 +144,7 @@
 				7921ADE52EEB0510001B8143 /* NotificationManager.swift */,
 				7921ADDF2EEB043D001B8143 /* LivesManager.swift */,
 				7921ADE12EEB04F6001B8143 /* SoundManager.swift */,
+				C2000004 /* KnuthSolver.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -160,6 +165,7 @@
 				A2000008 /* GameView.swift */,
 				A2000009 /* GameOverlays.swift */,
 				C2000002 /* BallSortView.swift */,
+				C2000005 /* TimeAttackView.swift */,
 			);
 			path = Game;
 			sourceTree = "<group>";
@@ -273,6 +279,8 @@
 				C1000001 /* BallSortGame.swift in Sources */,
 				C1000002 /* BallSortView.swift in Sources */,
 				C1000003 /* BallSortLevelSelectView.swift in Sources */,
+				C1000004 /* KnuthSolver.swift in Sources */,
+				C1000005 /* TimeAttackView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
