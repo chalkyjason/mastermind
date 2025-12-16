@@ -7,6 +7,7 @@ A beautiful SwiftUI implementation of the classic Mastermind code-breaking puzzl
 - **Classic Mastermind Gameplay**: Guess the secret color code using logical deduction
 - **6 Difficulty Tiers**: Tutorial through Master with 330+ levels total
 - **Daily Challenges**: New puzzle every day with streak tracking
+- **Widget Support**: Home screen widget for quick game access
 - **Game Center Integration**: Leaderboards and achievements
 - **Haptic Feedback**: Rich tactile feedback throughout the game
 - **Beautiful UI**: Modern gradient-based design with smooth animations
@@ -42,7 +43,7 @@ A beautiful SwiftUI implementation of the classic Mastermind code-breaking puzzl
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/CodeBreaker.git
+   git clone https://github.com/chalkyjason/mastermind.git
    ```
 
 2. Open `CodeBreaker.xcodeproj` in Xcode
@@ -50,6 +51,8 @@ A beautiful SwiftUI implementation of the classic Mastermind code-breaking puzzl
 3. Select your development team in Signing & Capabilities
 
 4. Build and run on your device or simulator
+
+> 📖 For detailed setup instructions, see [QUICKSTART.md](QUICKSTART.md)
 
 ## Game Center Setup (Optional)
 
@@ -66,29 +69,51 @@ To enable Game Center features:
 ## Project Structure
 
 ```
-CodeBreaker/
-├── CodeBreakerApp.swift      # App entry point
-├── Models/
-│   ├── GameTypes.swift       # Enums and data types
-│   └── MastermindGame.swift  # Core game logic
-├── ViewModels/
-│   └── GameManager.swift     # State management & persistence
-├── Views/
-│   ├── ContentView.swift     # Main menu
-│   ├── Game/
-│   │   ├── GameView.swift    # Main gameplay screen
-│   │   └── GameOverlays.swift # Win/lose screens
-│   └── Menu/
-│       ├── LevelSelectView.swift
-│       ├── DailyChallengeView.swift
-│       ├── SettingsView.swift
-│       └── HowToPlayView.swift
-├── Services/
-│   ├── HapticManager.swift   # Haptic feedback
-│   └── GameCenterManager.swift
-└── Resources/
-    └── Assets.xcassets/      # Colors and images
+mastermind/
+├── README.md
+├── QUICKSTART.md              # Quick setup guide
+├── CLAUDE.md                  # Development documentation
+├── ADS_SETUP.md               # Advertisement integration guide
+├── CODE_REVIEW_SUMMARY.md     # Code review notes
+├── AD_IMPLEMENTATION_REVIEW.md
+├── AD_INTEGRATION_STATUS.md
+├── validate_ads.sh
+├── CodeBreaker/
+│   ├── CodeBreakerApp.swift   # App entry point
+│   ├── Models/
+│   │   ├── GameTypes.swift    # Enums and data types
+│   │   └── MastermindGame.swift # Core game logic
+│   ├── ViewModels/
+│   │   └── GameManager.swift  # State management & persistence
+│   ├── Views/
+│   │   ├── ContentView.swift  # Main menu
+│   │   ├── Game/
+│   │   │   ├── GameView.swift    # Main gameplay screen
+│   │   │   └── GameOverlays.swift # Win/lose screens
+│   │   └── Menu/
+│   │       ├── LevelSelectView.swift
+│   │       ├── DailyChallengeView.swift
+│   │       ├── SettingsView.swift
+│   │       └── HowToPlayView.swift
+│   ├── Services/
+│   │   ├── HapticManager.swift   # Haptic feedback
+│   │   └── GameCenterManager.swift
+│   └── Resources/
+│       └── Assets.xcassets/      # Colors and images
+├── CodeBreakerWidget/
+│   ├── CodeBreakerWidget.swift   # Home screen widget
+│   └── CodeBreakerWidget.entitlements
+└── CodeBreaker.xcodeproj
 ```
+
+## Documentation
+
+This repository includes comprehensive documentation for developers:
+
+- **[QUICKSTART.md](QUICKSTART.md)** - Quick setup guide for adding Google Mobile Ads SDK
+- **[CLAUDE.md](CLAUDE.md)** - Complete development documentation covering architecture, patterns, and best practices
+- **[ADS_SETUP.md](ADS_SETUP.md)** - Detailed guide for advertisement integration
+- **[CODE_REVIEW_SUMMARY.md](CODE_REVIEW_SUMMARY.md)** - Code review notes and status
 
 ## Customization
 
