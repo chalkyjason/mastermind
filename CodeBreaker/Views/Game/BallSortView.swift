@@ -1,6 +1,27 @@
 import SwiftUI
 import Foundation
 
+// MARK: - Drag State
+
+struct DraggedBallInfo: Equatable {
+    let sourceTubeIndex: Int
+    let color: PegColor
+    let ballCount: Int
+}
+
+struct TubeFrame: Equatable {
+    let index: Int
+    let frame: CGRect
+}
+
+struct TubeFramePreferenceKey: PreferenceKey {
+    static var defaultValue: [TubeFrame] = []
+
+    static func reduce(value: inout [TubeFrame], nextValue: () -> [TubeFrame]) {
+        value.append(contentsOf: nextValue())
+    }
+}
+
 struct BallSortView: View {
     @EnvironmentObject var gameManager: GameManager
     @EnvironmentObject var livesManager: LivesManager
@@ -10,6 +31,13 @@ struct BallSortView: View {
     @State private var showingWinSheet = false
     @State private var animatingBall = false
     @State private var movingBallPosition: CGPoint?
+
+    // Drag state
+    @State private var draggedBallInfo: DraggedBallInfo?
+    @State private var dragPosition: CGPoint = .zero
+    @State private var tubeFrames: [TubeFrame] = []
+    @State private var highlightedTubeIndex: Int?
+    @GestureState private var isDragging = false
 
     let level: BallSortLevel?
 
@@ -41,9 +69,18 @@ struct BallSortView: View {
 
                 Spacer()
 
-                // Tubes grid
-                TubesGridView(game: game)
-                    .padding(.horizontal, 16)
+                // Tubes grid with drag support
+                TubesGridView(
+                    game: game,
+                    draggedBallInfo: $draggedBallInfo,
+                    dragPosition: $dragPosition,
+                    highlightedTubeIndex: $highlightedTubeIndex,
+                    tubeFrames: $tubeFrames,
+                    onDragStarted: handleDragStarted,
+                    onDragEnded: handleDragEnded
+                )
+                .padding(.horizontal, 16)
+                .coordinateSpace(name: "tubesGrid")
 
                 Spacer()
 
@@ -85,6 +122,15 @@ struct BallSortView: View {
                     .padding()
                     .padding(.bottom, 20)
                 }
+            }
+
+            // Dragging ball overlay
+            if let dragInfo = draggedBallInfo {
+                DraggingBallView(
+                    color: dragInfo.color,
+                    ballCount: dragInfo.ballCount,
+                    position: dragPosition
+                )
             }
 
             // Win overlay
@@ -140,6 +186,53 @@ struct BallSortView: View {
         showingWinSheet = false
         game.restart()
     }
+
+    // MARK: - Drag Handling
+
+    private func handleDragStarted(tubeIndex: Int, position: CGPoint) {
+        guard game.gameState == .playing else { return }
+        guard let topColor = game.topBall(in: tubeIndex) else { return }
+
+        // Count consecutive same-color balls at top
+        let tube = game.tubes[tubeIndex]
+        var ballCount = 0
+        for i in stride(from: tube.count - 1, through: 0, by: -1) {
+            if tube[i] == topColor {
+                ballCount += 1
+            } else {
+                break
+            }
+        }
+
+        draggedBallInfo = DraggedBallInfo(
+            sourceTubeIndex: tubeIndex,
+            color: topColor,
+            ballCount: ballCount
+        )
+        dragPosition = position
+        HapticManager.shared.selection()
+    }
+
+    private func handleDragEnded() {
+        guard let dragInfo = draggedBallInfo else { return }
+
+        // Find which tube we're over
+        if let targetIndex = highlightedTubeIndex,
+           targetIndex != dragInfo.sourceTubeIndex,
+           game.canMove(from: dragInfo.sourceTubeIndex, to: targetIndex) {
+            // Perform the move
+            game.selectTube(at: dragInfo.sourceTubeIndex)
+            game.selectTube(at: targetIndex)
+            HapticManager.shared.pegPlaced()
+            SoundManager.shared.pegPlaced()
+        }
+
+        // Reset drag state
+        withAnimation(.easeOut(duration: 0.2)) {
+            draggedBallInfo = nil
+            highlightedTubeIndex = nil
+        }
+    }
 }
 
 // MARK: - Ball Sort Header
@@ -191,36 +284,61 @@ struct TubesGridView: View {
     @ObservedObject var game: BallSortGame
     @AppStorage("colorblindMode") private var colorblindMode = false
 
+    @Binding var draggedBallInfo: DraggedBallInfo?
+    @Binding var dragPosition: CGPoint
+    @Binding var highlightedTubeIndex: Int?
+    @Binding var tubeFrames: [TubeFrame]
+
+    var onDragStarted: (Int, CGPoint) -> Void
+    var onDragEnded: () -> Void
+
     var body: some View {
         let columns = calculateColumns()
 
-        VStack(spacing: 24) {
-            // Split tubes into rows
-            let tubesPerRow = columns
-            let rows = stride(from: 0, to: game.numberOfTubes, by: tubesPerRow).map { startIndex in
-                Array(0..<min(tubesPerRow, game.numberOfTubes - startIndex)).map { startIndex + $0 }
-            }
+        GeometryReader { geometry in
+            VStack(spacing: 24) {
+                // Split tubes into rows
+                let tubesPerRow = columns
+                let rows = stride(from: 0, to: game.numberOfTubes, by: tubesPerRow).map { startIndex in
+                    Array(0..<min(tubesPerRow, game.numberOfTubes - startIndex)).map { startIndex + $0 }
+                }
 
-            ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
-                HStack(spacing: 12) {
-                    ForEach(row, id: \.self) { tubeIndex in
-                        TubeView(
-                            balls: game.tubes[tubeIndex],
-                            isSelected: game.selectedTubeIndex == tubeIndex,
-                            isComplete: game.isTubeComplete(tubeIndex),
-                            colorblindMode: colorblindMode,
-                            onTap: {
-                                game.selectTube(at: tubeIndex)
-                                if game.selectedTubeIndex == tubeIndex {
-                                    HapticManager.shared.selection()
-                                } else {
-                                    HapticManager.shared.pegPlaced()
-                                    SoundManager.shared.pegPlaced()
+                ForEach(Array(rows.enumerated()), id: \.offset) { _, row in
+                    HStack(spacing: 12) {
+                        ForEach(row, id: \.self) { tubeIndex in
+                            DraggableTubeView(
+                                tubeIndex: tubeIndex,
+                                balls: game.tubes[tubeIndex],
+                                isSelected: game.selectedTubeIndex == tubeIndex,
+                                isComplete: game.isTubeComplete(tubeIndex),
+                                isHighlighted: highlightedTubeIndex == tubeIndex,
+                                isDragSource: draggedBallInfo?.sourceTubeIndex == tubeIndex,
+                                colorblindMode: colorblindMode,
+                                onDragStarted: onDragStarted,
+                                onDragChanged: { position in
+                                    dragPosition = position
+                                    updateHighlightedTube(at: position)
+                                },
+                                onDragEnded: onDragEnded
+                            )
+                            .background(
+                                GeometryReader { tubeGeometry in
+                                    Color.clear.preference(
+                                        key: TubeFramePreferenceKey.self,
+                                        value: [TubeFrame(
+                                            index: tubeIndex,
+                                            frame: tubeGeometry.frame(in: .named("tubesGrid"))
+                                        )]
+                                    )
                                 }
-                            }
-                        )
+                            )
+                        }
                     }
                 }
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .onPreferenceChange(TubeFramePreferenceKey.self) { frames in
+                tubeFrames = frames
             }
         }
     }
@@ -236,6 +354,29 @@ struct TubesGridView: View {
         } else {
             return 7
         }
+    }
+
+    private func updateHighlightedTube(at position: CGPoint) {
+        guard let dragInfo = draggedBallInfo else {
+            highlightedTubeIndex = nil
+            return
+        }
+
+        // Find which tube the position is over
+        for frame in tubeFrames {
+            if frame.frame.contains(position) {
+                // Check if we can move to this tube
+                if frame.index != dragInfo.sourceTubeIndex &&
+                   game.canMove(from: dragInfo.sourceTubeIndex, to: frame.index) {
+                    if highlightedTubeIndex != frame.index {
+                        highlightedTubeIndex = frame.index
+                        HapticManager.shared.selection()
+                    }
+                    return
+                }
+            }
+        }
+        highlightedTubeIndex = nil
     }
 }
 
@@ -285,6 +426,131 @@ struct TubeView: View {
             .animation(.easeInOut(duration: 0.15), value: isSelected)
         }
         .buttonStyle(ScaleButtonStyle())
+    }
+}
+
+// MARK: - Draggable Tube View
+
+struct DraggableTubeView: View {
+    let tubeIndex: Int
+    let balls: [PegColor]
+    let isSelected: Bool
+    let isComplete: Bool
+    let isHighlighted: Bool
+    let isDragSource: Bool
+    let colorblindMode: Bool
+    var onDragStarted: (Int, CGPoint) -> Void
+    var onDragChanged: (CGPoint) -> Void
+    var onDragEnded: () -> Void
+
+    private let tubeCapacity = 4
+    private let ballSize: CGFloat = 36
+    private let tubeWidth: CGFloat = 44
+    private let tubeHeight: CGFloat = 160
+
+    var body: some View {
+        ZStack(alignment: .bottom) {
+            // Tube container
+            TubeShape()
+                .fill(Color.black.opacity(0.6))
+                .frame(width: tubeWidth, height: tubeHeight)
+                .overlay(
+                    TubeShape()
+                        .stroke(
+                            strokeColor,
+                            lineWidth: (isSelected || isHighlighted) ? 3 : 2
+                        )
+                )
+
+            // Balls inside tube
+            VStack(spacing: 2) {
+                ForEach(Array(displayBalls.enumerated().reversed()), id: \.offset) { index, color in
+                    BallView(
+                        color: color,
+                        size: ballSize,
+                        colorblindMode: colorblindMode,
+                        isTopBall: false
+                    )
+                }
+            }
+            .padding(.bottom, 8)
+        }
+        .scaleEffect((isSelected || isHighlighted) ? 1.05 : 1.0)
+        .animation(.easeInOut(duration: 0.15), value: isSelected)
+        .animation(.easeInOut(duration: 0.15), value: isHighlighted)
+        .gesture(
+            DragGesture(minimumDistance: 10, coordinateSpace: .named("tubesGrid"))
+                .onChanged { value in
+                    if !isDragSource && !balls.isEmpty {
+                        onDragStarted(tubeIndex, value.location)
+                    } else if isDragSource {
+                        onDragChanged(value.location)
+                    }
+                }
+                .onEnded { _ in
+                    onDragEnded()
+                }
+        )
+    }
+
+    private var strokeColor: Color {
+        if isHighlighted {
+            return Color("AccentGreen")
+        } else if isSelected {
+            return Color.white
+        } else if isComplete {
+            return Color("AccentGreen")
+        } else {
+            return Color.white.opacity(0.3)
+        }
+    }
+
+    // Hide top balls when they're being dragged
+    private var displayBalls: [PegColor] {
+        if isDragSource {
+            // Count consecutive same-color balls at top
+            guard let topColor = balls.last else { return balls }
+            var count = 0
+            for i in stride(from: balls.count - 1, through: 0, by: -1) {
+                if balls[i] == topColor {
+                    count += 1
+                } else {
+                    break
+                }
+            }
+            // Return balls without the dragged ones
+            return Array(balls.dropLast(count))
+        }
+        return balls
+    }
+}
+
+// MARK: - Dragging Ball View (Floating)
+
+struct DraggingBallView: View {
+    let color: PegColor
+    let ballCount: Int
+    let position: CGPoint
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
+    private let ballSize: CGFloat = 36
+
+    var body: some View {
+        VStack(spacing: 2) {
+            ForEach(0..<ballCount, id: \.self) { _ in
+                BallView(
+                    color: color,
+                    size: ballSize,
+                    colorblindMode: colorblindMode,
+                    isTopBall: false
+                )
+            }
+        }
+        .shadow(color: .black.opacity(0.3), radius: 8, x: 0, y: 4)
+        .scaleEffect(1.1)
+        .position(x: position.x, y: position.y - CGFloat(ballCount * 20))
+        .animation(.interactiveSpring(response: 0.15, dampingFraction: 0.8), value: position)
+        .allowsHitTesting(false)
     }
 }
 
