@@ -267,66 +267,70 @@ enum BallSortDifficulty: Int, CaseIterable, Codable {
     case medium = 1
     case hard = 2
     case expert = 3
-    
+    case master = 4
+
     var name: String {
         switch self {
         case .easy: return "Easy"
         case .medium: return "Medium"
         case .hard: return "Hard"
         case .expert: return "Expert"
+        case .master: return "Master"
         }
     }
-    
-    var tubesCount: Int {
+
+    var colorCount: Int {
         switch self {
         case .easy: return 4
-        case .medium: return 5
-        case .hard: return 6
-        case .expert: return 7
+        case .medium: return 6
+        case .hard: return 8
+        case .expert: return 10
+        case .master: return 12
         }
     }
-    
-    var colorsCount: Int {
-        switch self {
-        case .easy: return 3
-        case .medium: return 4
-        case .hard: return 5
-        case .expert: return 6
-        }
-    }
-    
-    var ballsPerColor: Int {
-        return 4
-    }
-    
+
     var emptyTubes: Int {
         return 2
     }
-    
+
     var levelsCount: Int {
         switch self {
         case .easy: return 20
         case .medium: return 30
         case .hard: return 40
         case .expert: return 50
+        case .master: return 60
         }
     }
-    
+
+    var targetMoves: Int {
+        // Target moves for 3-star rating
+        switch self {
+        case .easy: return 15
+        case .medium: return 25
+        case .hard: return 40
+        case .expert: return 55
+        case .master: return 75
+        }
+    }
+
     var iconName: String {
         switch self {
         case .easy: return "leaf.fill"
         case .medium: return "flame.fill"
         case .hard: return "bolt.fill"
         case .expert: return "crown.fill"
+        case .master: return "sparkles"
         }
     }
-    
+
     var color: Color {
         switch self {
         case .easy: return .green
         case .medium: return .orange
         case .hard: return .red
         case .expert: return .purple
+        case .master: return Color("AccentGold")
         }
     }
 }
@@ -340,19 +344,17 @@ struct BallSortLevel: Identifiable, Codable {
     var stars: Int = 0
     var isUnlocked: Bool = false
     var bestMoves: Int?
-    
+
     var displayName: String {
         "\(difficulty.name) \(levelInDifficulty)"
     }
-    
-    // Calculate stars based on moves used vs optimal moves
-    static func calculateStars(moves: Int, difficulty: BallSortDifficulty) -> Int {
-        let optimalMoves = difficulty.colorsCount * 2 // Rough estimate
-        let percentage = Double(moves) / Double(optimalMoves)
-        
-        if percentage <= 1.2 {
+
+    // Calculate stars based on moves used vs target moves
+    static func calculateStars(moves: Int, minMoves: Int) -> Int {
+        let ratio = Double(moves) / Double(minMoves)
+        if ratio <= 1.5 {
             return 3
-        } else if percentage <= 1.5 {
+        } else if ratio <= 2.5 {
             return 2
         } else {
             return 1
