@@ -11,6 +11,9 @@
 		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
 		7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE32EEB0500001B8143 /* AdManager.swift */; };
 		7921ADE62EEB0510001B8143 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE52EEB0510001B8143 /* NotificationManager.swift */; };
+		C1000001 /* BallSortGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001 /* BallSortGame.swift */; };
+		C1000002 /* BallSortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002 /* BallSortView.swift */; };
+		C1000003 /* BallSortLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003 /* BallSortLevelSelectView.swift */; };
 		799256772EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */; };
 		799256792EE753F4006215AA /* Assets.xcassetsContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256782EE753F4006215AA /* Assets.xcassetsContents.json */; };
 		A1000001 /* CodeBreakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CodeBreakerApp.swift */; };
@@ -35,6 +38,9 @@
 		7921ADE12EEB04F6001B8143 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		7921ADE32EEB0500001B8143 /* AdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdManager.swift; sourceTree = "<group>"; };
 		7921ADE52EEB0510001B8143 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
+		C2000001 /* BallSortGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortGame.swift; sourceTree = "<group>"; };
+		C2000002 /* BallSortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortView.swift; sourceTree = "<group>"; };
+		C2000003 /* BallSortLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortLevelSelectView.swift; sourceTree = "<group>"; };
 		799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsAppIcon.appiconsetContents.json; sourceTree = "<group>"; };
 		799256782EE753F4006215AA /* Assets.xcassetsContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsContents.json; sourceTree = "<group>"; };
 		79D5DE2C2EF08567004BCA5D /* CodeBreaker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CodeBreaker.entitlements; sourceTree = "<group>"; };
@@ -102,6 +108,7 @@
 			children = (
 				A2000003 /* GameTypes.swift */,
 				A2000004 /* MastermindGame.swift */,
+				C2000001 /* BallSortGame.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -152,6 +159,7 @@
 			children = (
 				A2000008 /* GameView.swift */,
 				A2000009 /* GameOverlays.swift */,
+				C2000002 /* BallSortView.swift */,
 			);
 			path = Game;
 			sourceTree = "<group>";
@@ -163,6 +171,7 @@
 				A2000011 /* DailyChallengeView.swift */,
 				A2000012 /* SettingsView.swift */,
 				A2000013 /* HowToPlayView.swift */,
+				C2000003 /* BallSortLevelSelectView.swift */,
 			);
 			path = Menu;
 			sourceTree = "<group>";
@@ -261,6 +270,9 @@
 				7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */,
 				7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */,
 				7921ADE62EEB0510001B8143 /* NotificationManager.swift in Sources */,
+				C1000001 /* BallSortGame.swift in Sources */,
+				C1000002 /* BallSortView.swift in Sources */,
+				C1000003 /* BallSortLevelSelectView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
