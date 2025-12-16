@@ -14,6 +14,11 @@ struct GameView: View {
     @State private var showingLoseSheet = false
     @State private var animatingFeedback = false
     @State private var revealedPegs: Set<Int> = []
+    @State private var dragTargetIndex: Int?
+    @State private var isDragging = false
+    @State private var showingHint = false
+    @State private var currentHint: KnuthSolver.HintResult?
+    @State private var isCalculatingHint = false
 
     let level: GameLevel?
     let isDaily: Bool
@@ -68,6 +73,7 @@ struct GameView: View {
                                     codeLength: game.codeLength,
                                     attemptNumber: game.currentAttempt,
                                     selectedIndex: selectedPegIndex,
+                                    dragTargetIndex: dragTargetIndex,
                                     onPegTap: { index in
                                         selectedPegIndex = index
                                         showingColorPicker = true
@@ -78,6 +84,21 @@ struct GameView: View {
                                         game.clearPosition(at: index)
                                         HapticManager.shared.pegRemoved()
                                         selectedPegIndex = index
+                                    },
+                                    onDrop: { index, color in
+                                        game.setColor(at: index, color: color)
+                                        HapticManager.shared.pegPlaced()
+                                        SoundManager.shared.pegPlaced()
+                                        dragTargetIndex = nil
+                                        isDragging = false
+                                    },
+                                    onDropTargetChanged: { index in
+                                        if dragTargetIndex != index {
+                                            dragTargetIndex = index
+                                            if index != nil {
+                                                HapticManager.shared.selection()
+                                            }
+                                        }
                                     }
                                 )
                                 .id("current")
@@ -113,10 +134,13 @@ struct GameView: View {
                                     // Auto-advance to next empty slot
                                     advanceToNextEmptySlot(from: index)
                                 }
+                            },
+                            onDragStarted: {
+                                isDragging = true
                             }
                         )
                         
-                        HStack(spacing: 16) {
+                        HStack(spacing: 12) {
                             Button(action: {
                                 game.clearCurrentGuess()
                                 selectedPegIndex = 0
@@ -126,12 +150,30 @@ struct GameView: View {
                                 Label("Clear", systemImage: "xmark.circle.fill")
                                     .font(.headline)
                                     .foregroundColor(.white.opacity(0.8))
-                                    .padding(.horizontal, 20)
+                                    .padding(.horizontal, 16)
                                     .padding(.vertical, 12)
                                     .background(Color.white.opacity(0.2))
                                     .clipShape(Capsule())
                             }
-                            
+
+                            Button(action: requestHint) {
+                                Group {
+                                    if isCalculatingHint {
+                                        ProgressView()
+                                            .progressViewStyle(CircularProgressViewStyle(tint: .white))
+                                    } else {
+                                        Label("Hint", systemImage: "lightbulb.fill")
+                                    }
+                                }
+                                .font(.headline)
+                                .foregroundColor(.yellow)
+                                .padding(.horizontal, 16)
+                                .padding(.vertical, 12)
+                                .background(Color.yellow.opacity(0.2))
+                                .clipShape(Capsule())
+                            }
+                            .disabled(isCalculatingHint)
+
                             Button(action: submitGuess) {
                                 Label("Submit", systemImage: "checkmark.circle.fill")
                                     .font(.headline.weight(.bold))
@@ -161,6 +203,7 @@ struct GameView: View {
                     maxAttempts: game.maxAttempts,
                     secretCode: game.secretCode,
                     isDaily: isDaily,
+                    guessHistory: game.guessHistory,
                     onContinue: handleWinContinue,
                     onReplay: handleReplay
                 )
@@ -175,6 +218,25 @@ struct GameView: View {
                     onWatchAd: handleWatchAd,
                     onRetry: handleReplay,
                     onQuit: { dismiss() }
+                )
+                .transition(.opacity)
+            }
+
+            // Hint overlay
+            if showingHint, let hint = currentHint {
+                HintOverlayView(
+                    hint: hint,
+                    onApply: {
+                        applyHint(hint)
+                        withAnimation {
+                            showingHint = false
+                        }
+                    },
+                    onDismiss: {
+                        withAnimation {
+                            showingHint = false
+                        }
+                    }
                 )
                 .transition(.opacity)
             }
@@ -292,6 +354,172 @@ struct GameView: View {
         game.restart()
         selectedPegIndex = 0
     }
+
+    private func requestHint() {
+        guard !isCalculatingHint else { return }
+
+        isCalculatingHint = true
+        HapticManager.shared.selection()
+
+        // Run the solver on a background thread for larger search spaces
+        DispatchQueue.global(qos: .userInteractive).async {
+            let solver = KnuthSolver(tier: game.tier)
+            let hint = solver.getHint(guessHistory: game.guessHistory)
+
+            DispatchQueue.main.async {
+                isCalculatingHint = false
+                if let hint = hint {
+                    currentHint = hint
+                    withAnimation {
+                        showingHint = true
+                    }
+                    HapticManager.shared.notification(.success)
+                } else {
+                    HapticManager.shared.notification(.error)
+                }
+            }
+        }
+    }
+
+    private func applyHint(_ hint: KnuthSolver.HintResult) {
+        // Fill the current guess with the suggested colors
+        for (index, color) in hint.suggestedGuess.enumerated() {
+            game.setColor(at: index, color: color)
+        }
+        HapticManager.shared.pegPlaced()
+        SoundManager.shared.pegPlaced()
+    }
+}
+
+// MARK: - Hint Overlay View
+
+struct HintOverlayView: View {
+    let hint: KnuthSolver.HintResult
+    let onApply: () -> Void
+    let onDismiss: () -> Void
+
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
+    var body: some View {
+        ZStack {
+            // Dimmed background
+            Color.black.opacity(0.7)
+                .ignoresSafeArea()
+                .onTapGesture {
+                    onDismiss()
+                }
+
+            VStack(spacing: 24) {
+                // Header
+                VStack(spacing: 8) {
+                    Image(systemName: "lightbulb.fill")
+                        .font(.system(size: 44))
+                        .foregroundColor(.yellow)
+                        .shadow(color: .yellow.opacity(0.5), radius: 10)
+
+                    Text("Suggested Guess")
+                        .font(.title2.weight(.bold))
+                        .foregroundColor(.white)
+                }
+
+                // Suggested code display
+                HStack(spacing: 12) {
+                    ForEach(Array(hint.suggestedGuess.enumerated()), id: \.offset) { _, color in
+                        ZStack {
+                            Circle()
+                                .fill(color.color)
+                                .frame(width: 52, height: 52)
+                                .overlay(
+                                    Circle()
+                                        .stroke(Color.white.opacity(0.5), lineWidth: 2)
+                                )
+                                .shadow(color: color.color.opacity(0.5), radius: 6, y: 2)
+
+                            if colorblindMode {
+                                Image(systemName: color.pattern)
+                                    .font(.system(size: 24, weight: .bold))
+                                    .foregroundColor(.white.opacity(0.9))
+                            }
+                        }
+                    }
+                }
+                .padding()
+                .background(Color.white.opacity(0.1))
+                .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+
+                // Stats
+                VStack(spacing: 8) {
+                    HStack {
+                        Image(systemName: "number.circle.fill")
+                            .foregroundColor(.blue)
+                        Text("\(hint.remainingPossibilities) possible codes remaining")
+                            .font(.subheadline)
+                            .foregroundColor(.white.opacity(0.8))
+                    }
+
+                    if hint.remainingPossibilities > 1 {
+                        HStack {
+                            Image(systemName: "arrow.down.circle.fill")
+                                .foregroundColor(.green)
+                            Text("Eliminates at least \(hint.guaranteedEliminationMin) possibilities")
+                                .font(.subheadline)
+                                .foregroundColor(.white.opacity(0.8))
+                        }
+                    }
+
+                    if hint.isOptimal {
+                        HStack {
+                            Image(systemName: "star.fill")
+                                .foregroundColor(.yellow)
+                            Text("Optimal guess")
+                                .font(.subheadline)
+                                .foregroundColor(.yellow)
+                        }
+                    }
+                }
+
+                // Reasoning
+                Text(hint.reasoning)
+                    .font(.caption)
+                    .foregroundColor(.white.opacity(0.6))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                // Buttons
+                HStack(spacing: 16) {
+                    Button(action: onDismiss) {
+                        Text("Dismiss")
+                            .font(.headline)
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+
+                    Button(action: onApply) {
+                        Label("Apply", systemImage: "checkmark.circle.fill")
+                            .font(.headline.weight(.bold))
+                            .foregroundColor(.black)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.yellow)
+                            .clipShape(Capsule())
+                    }
+                }
+            }
+            .padding(24)
+            .background(
+                RoundedRectangle(cornerRadius: 24, style: .continuous)
+                    .fill(Color.black.opacity(0.9))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 24, style: .continuous)
+                            .stroke(Color.yellow.opacity(0.3), lineWidth: 1)
+                    )
+            )
+            .padding(.horizontal, 24)
+        }
+    }
 }
 
 // MARK: - Game Header
@@ -380,8 +608,11 @@ struct CurrentGuessRowView: View {
     let codeLength: Int
     let attemptNumber: Int
     let selectedIndex: Int?
+    var dragTargetIndex: Int? = nil
     let onPegTap: (Int) -> Void
     var onPegLongPress: ((Int) -> Void)? = nil
+    var onDrop: ((Int, PegColor) -> Void)? = nil
+    var onDropTargetChanged: ((Int?) -> Void)? = nil
 
     var body: some View {
         HStack(spacing: 12) {
@@ -391,28 +622,20 @@ struct CurrentGuessRowView: View {
                 .foregroundColor(.white)
                 .frame(width: 24)
 
-            // Guess pegs (tappable with long press support)
+            // Guess pegs (tappable with long press and drop support)
             HStack(spacing: 8) {
                 ForEach(0..<codeLength, id: \.self) { index in
-                    if let color = currentGuess[index] {
-                        PegView(color: color, isSelected: selectedIndex == index)
-                            .onTapGesture {
-                                onPegTap(index)
-                            }
-                            .onLongPressGesture(minimumDuration: 0.3, pressing: { isPressing in
-                                if isPressing {
-                                    HapticManager.shared.longPressStart()
-                                }
-                            }) {
-                                HapticManager.shared.longPressEnd()
-                                onPegLongPress?(index)
-                            }
-                    } else {
-                        EmptyPegView(isSelected: selectedIndex == index)
-                            .onTapGesture {
-                                onPegTap(index)
-                            }
-                    }
+                    DroppablePegSlot(
+                        color: currentGuess[index],
+                        isSelected: selectedIndex == index,
+                        isDropTarget: dragTargetIndex == index,
+                        onTap: { onPegTap(index) },
+                        onLongPress: { onPegLongPress?(index) },
+                        onDrop: { color in onDrop?(index, color) },
+                        onDropTargetChanged: { isTarget in
+                            onDropTargetChanged?(isTarget ? index : nil)
+                        }
+                    )
                 }
             }
 
@@ -430,6 +653,126 @@ struct CurrentGuessRowView: View {
             RoundedRectangle(cornerRadius: 12, style: .continuous)
                 .stroke(Color.white.opacity(0.3), lineWidth: 2)
         )
+    }
+}
+
+// MARK: - Droppable Peg Slot
+
+struct DroppablePegSlot: View {
+    let color: PegColor?
+    let isSelected: Bool
+    let isDropTarget: Bool
+    let onTap: () -> Void
+    var onLongPress: (() -> Void)? = nil
+    var onDrop: ((PegColor) -> Void)? = nil
+    var onDropTargetChanged: ((Bool) -> Void)? = nil
+
+    @AppStorage("colorblindMode") private var colorblindMode = false
+
+    var body: some View {
+        Group {
+            if let color = color {
+                // Filled peg - can be dragged to reorder
+                ZStack {
+                    Circle()
+                        .fill(color.color)
+                        .frame(width: 44, height: 44)
+                        .overlay(
+                            Circle()
+                                .stroke(strokeColor, lineWidth: strokeWidth)
+                        )
+                        .shadow(color: color.color.opacity(0.5), radius: isSelected || isDropTarget ? 8 : 4, y: 2)
+
+                    if colorblindMode {
+                        Image(systemName: color.pattern)
+                            .font(.system(size: 20, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+                    }
+                }
+                .scaleEffect(scaleEffect)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+                .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDropTarget)
+                .onTapGesture { onTap() }
+                .onLongPressGesture(minimumDuration: 0.3, pressing: { isPressing in
+                    if isPressing {
+                        HapticManager.shared.longPressStart()
+                    }
+                }) {
+                    HapticManager.shared.longPressEnd()
+                    onLongPress?()
+                }
+                .draggable(color) {
+                    // Drag preview for existing peg
+                    ZStack {
+                        Circle()
+                            .fill(color.color)
+                            .frame(width: 48, height: 48)
+                            .overlay(
+                                Circle()
+                                    .stroke(Color.white, lineWidth: 3)
+                            )
+                            .shadow(color: color.color.opacity(0.8), radius: 8, y: 4)
+
+                        if colorblindMode {
+                            Image(systemName: color.pattern)
+                                .font(.system(size: 22, weight: .bold))
+                                .foregroundColor(.white.opacity(0.9))
+                        }
+                    }
+                }
+            } else {
+                // Empty slot
+                Circle()
+                    .stroke(strokeColor, lineWidth: 2)
+                    .frame(width: 44, height: 44)
+                    .background(
+                        Circle()
+                            .fill(Color.white.opacity(isSelected || isDropTarget ? 0.3 : 0.1))
+                    )
+                    .scaleEffect(scaleEffect)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isSelected)
+                    .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDropTarget)
+                    .onTapGesture { onTap() }
+            }
+        }
+        .dropDestination(for: PegColor.self) { items, _ in
+            guard let droppedColor = items.first else { return false }
+            onDrop?(droppedColor)
+            return true
+        } isTargeted: { isTargeted in
+            onDropTargetChanged?(isTargeted)
+        }
+    }
+
+    private var strokeColor: Color {
+        if isDropTarget {
+            return Color.green
+        } else if isSelected {
+            return Color.white
+        } else {
+            return Color.white.opacity(0.3)
+        }
+    }
+
+    private var strokeWidth: CGFloat {
+        if isDropTarget {
+            return 3
+        } else if isSelected {
+            return 3
+        } else {
+            return 2
+        }
+    }
+
+    private var scaleEffect: CGFloat {
+        if isDropTarget {
+            return 1.15
+        } else if isSelected {
+            return 1.1
+        } else {
+            return 1.0
+        }
     }
 }
 
@@ -559,32 +902,84 @@ struct FeedbackPegsView: View {
 struct ColorPickerView: View {
     let colors: [PegColor]
     let onColorSelected: (PegColor) -> Void
+    var onDragStarted: (() -> Void)? = nil
     @AppStorage("colorblindMode") private var colorblindMode = false
 
     var body: some View {
         HStack(spacing: 12) {
             ForEach(colors) { color in
-                Button(action: { onColorSelected(color) }) {
-                    ZStack {
-                        Circle()
-                            .fill(color.color)
-                            .frame(width: 48, height: 48)
-                            .overlay(
-                                Circle()
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                            )
-                            .shadow(color: color.color.opacity(0.5), radius: 4, y: 2)
+                DraggableColorPeg(
+                    color: color,
+                    colorblindMode: colorblindMode,
+                    onTap: { onColorSelected(color) },
+                    onDragStarted: onDragStarted
+                )
+            }
+        }
+    }
+}
 
-                        // Colorblind pattern overlay
-                        if colorblindMode {
-                            Image(systemName: color.pattern)
-                                .font(.system(size: 22, weight: .bold))
-                                .foregroundColor(.white.opacity(0.9))
-                                .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
-                        }
-                    }
+// MARK: - Draggable Color Peg
+
+struct DraggableColorPeg: View {
+    let color: PegColor
+    let colorblindMode: Bool
+    let onTap: () -> Void
+    var onDragStarted: (() -> Void)? = nil
+
+    @State private var isDragging = false
+
+    var body: some View {
+        ZStack {
+            Circle()
+                .fill(color.color)
+                .frame(width: 48, height: 48)
+                .overlay(
+                    Circle()
+                        .stroke(Color.white.opacity(0.3), lineWidth: 2)
+                )
+                .shadow(color: color.color.opacity(0.5), radius: isDragging ? 8 : 4, y: 2)
+
+            // Colorblind pattern overlay
+            if colorblindMode {
+                Image(systemName: color.pattern)
+                    .font(.system(size: 22, weight: .bold))
+                    .foregroundColor(.white.opacity(0.9))
+                    .shadow(color: .black.opacity(0.3), radius: 1, x: 0, y: 1)
+            }
+        }
+        .scaleEffect(isDragging ? 1.15 : 1.0)
+        .animation(.spring(response: 0.3, dampingFraction: 0.6), value: isDragging)
+        .onTapGesture {
+            onTap()
+        }
+        .draggable(color) {
+            // Drag preview
+            ZStack {
+                Circle()
+                    .fill(color.color)
+                    .frame(width: 52, height: 52)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white, lineWidth: 3)
+                    )
+                    .shadow(color: color.color.opacity(0.8), radius: 10, y: 4)
+
+                if colorblindMode {
+                    Image(systemName: color.pattern)
+                        .font(.system(size: 24, weight: .bold))
+                        .foregroundColor(.white.opacity(0.9))
                 }
-                .buttonStyle(ScaleButtonStyle())
+            }
+            .onAppear {
+                isDragging = true
+                onDragStarted?()
+                HapticManager.shared.impact(.medium)
+            }
+        }
+        .onChange(of: isDragging) { _, newValue in
+            if newValue == false {
+                // Reset when drag ends
             }
         }
     }

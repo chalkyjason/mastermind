@@ -6,6 +6,7 @@ struct ContentView: View {
     @State private var showingLevelSelect = false
     @State private var showingBallSort = false
     @State private var showingDailyChallenge = false
+    @State private var showingTimeAttack = false
     @State private var showingSettings = false
     @State private var showingHowToPlay = false
     
@@ -84,6 +85,15 @@ struct ContentView: View {
                             showingDailyChallenge = true
                         }
 
+                        MenuButton(
+                            title: "Time Attack",
+                            icon: "timer",
+                            color: Color("AccentOrange")
+                        ) {
+                            SoundManager.shared.buttonTap()
+                            showingTimeAttack = true
+                        }
+
                         HStack(spacing: 16) {
                             SmallMenuButton(
                                 title: "How to Play",
@@ -120,6 +130,9 @@ struct ContentView: View {
             }
             .navigationDestination(isPresented: $showingDailyChallenge) {
                 DailyChallengeView()
+            }
+            .navigationDestination(isPresented: $showingTimeAttack) {
+                TimeAttackView(tier: .beginner)
             }
             .sheet(isPresented: $showingHowToPlay) {
                 HowToPlayView()

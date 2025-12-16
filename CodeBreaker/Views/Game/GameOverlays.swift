@@ -8,6 +8,7 @@ struct WinOverlayView: View {
     let maxAttempts: Int
     let secretCode: [PegColor]
     let isDaily: Bool
+    var guessHistory: [GuessResult] = []
     let onContinue: () -> Void
     let onReplay: () -> Void
 
@@ -16,6 +17,8 @@ struct WinOverlayView: View {
     @State private var showConfetti = false
     @State private var codeRevealed = false
     @State private var showContent = false
+    @State private var showingShareSheet = false
+    @State private var shareText = ""
     @AppStorage("colorblindMode") private var colorblindMode = false
 
     var stars: Int {
@@ -99,6 +102,30 @@ struct WinOverlayView: View {
                 
                 // Buttons
                 VStack(spacing: 12) {
+                    // Share button for daily challenge
+                    if isDaily && !guessHistory.isEmpty {
+                        Button(action: {
+                            HapticManager.shared.primaryButtonTap()
+                            shareText = generateShareGrid()
+                            showingShareSheet = true
+                        }) {
+                            Label("Share Results", systemImage: "square.and.arrow.up")
+                                .font(.headline.weight(.bold))
+                                .foregroundColor(.white)
+                                .frame(maxWidth: .infinity)
+                                .padding(.vertical, 16)
+                                .background(
+                                    LinearGradient(
+                                        colors: [Color("AccentPurple"), Color("AccentBlue")],
+                                        startPoint: .leading,
+                                        endPoint: .trailing
+                                    )
+                                )
+                                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                        }
+                        .buttonStyle(ScaleButtonStyle())
+                    }
+
                     Button(action: {
                         HapticManager.shared.primaryButtonTap()
                         onContinue()
@@ -160,7 +187,53 @@ struct WinOverlayView: View {
                 }
             }
         }
+        .sheet(isPresented: $showingShareSheet) {
+            ShareSheet(items: [shareText])
+        }
     }
+
+    // Generate Wordle-style share grid
+    private func generateShareGrid() -> String {
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "MMM d, yyyy"
+        let dateString = dateFormatter.string(from: Date())
+
+        var grid = "🔐 Code Breaker Daily\n"
+        grid += "\(dateString)\n"
+        grid += "\(attempts)/\(maxAttempts) attempts\n"
+        grid += String(repeating: "⭐️", count: stars) + String(repeating: "☆", count: 3 - stars) + "\n\n"
+
+        // Build the emoji grid from guess history
+        for result in guessHistory {
+            var row = ""
+            for peg in result.feedback {
+                switch peg {
+                case .black:
+                    row += "🟢" // Correct position
+                case .white:
+                    row += "🟡" // Wrong position
+                case .empty:
+                    row += "⚫️" // Not in code
+                }
+            }
+            grid += row + "\n"
+        }
+
+        grid += "\nPlay at: codebreaker.app"
+        return grid
+    }
+}
+
+// MARK: - Share Sheet
+
+struct ShareSheet: UIViewControllerRepresentable {
+    let items: [Any]
+
+    func makeUIViewController(context: Context) -> UIActivityViewController {
+        UIActivityViewController(activityItems: items, applicationActivities: nil)
+    }
+
+    func updateUIViewController(_ uiViewController: UIActivityViewController, context: Context) {}
 }
 
 // MARK: - Lose Overlay

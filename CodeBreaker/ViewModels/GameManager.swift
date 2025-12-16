@@ -1,5 +1,6 @@
 import Foundation
 import SwiftUI
+import WidgetKit
 
 // MARK: - Game Manager
 
@@ -376,6 +377,25 @@ class GameManager: ObservableObject {
         if let encoded = try? JSONEncoder().encode(ballSortLevels) {
             defaults.set(encoded, forKey: Keys.ballSortLevels)
         }
+
+        // Sync to widget
+        syncToWidget()
+    }
+
+    /// Syncs data to the shared App Group for widget access
+    private func syncToWidget() {
+        guard let sharedDefaults = UserDefaults(suiteName: "group.com.codebreaker.shared") else { return }
+
+        sharedDefaults.set(currentStreak, forKey: "currentStreak")
+        sharedDefaults.set(totalStars, forKey: "totalStars")
+
+        // Save last daily challenge completion date
+        if let latestDaily = completedDailyChallenges.last(where: { $0.completed }) {
+            sharedDefaults.set(latestDaily.date, forKey: "lastDailyChallengeDate")
+        }
+
+        // Trigger widget refresh
+        WidgetCenter.shared.reloadAllTimelines()
     }
 
     private func loadData() {
