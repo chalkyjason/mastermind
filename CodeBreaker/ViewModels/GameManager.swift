@@ -18,6 +18,10 @@ class GameManager: ObservableObject {
     @Published var ballSortTotalStars: Int = 0
     @Published var ballSortLevelsCompleted: Int = 0
 
+    // Hints
+    @Published var hintsUsedToday: Int = 0
+    static let maxDailyHints = 3
+
     private let defaults = UserDefaults.standard
 
     // Keys for UserDefaults
@@ -28,6 +32,18 @@ class GameManager: ObservableObject {
         static let lastPlayedDate = "lastPlayedDate"
         static let dailyChallenges = "completedDailyChallenges"
         static let ballSortLevels = "ballSortLevels"
+        static let hintsUsedToday = "hintsUsedToday"
+        static let lastHintDate = "lastHintDate"
+    }
+
+    // MARK: - Hint Properties
+
+    var hintsRemaining: Int {
+        max(0, Self.maxDailyHints - hintsUsedToday)
+    }
+
+    var canUseHint: Bool {
+        hintsRemaining > 0
     }
     
     var hasDailyChallengeAvailable: Bool {
@@ -43,6 +59,7 @@ class GameManager: ObservableObject {
         generateBallSortLevels()
         checkDailyChallenge()
         updateStreak()
+        checkHintReset()
     }
     
     // MARK: - Level Generation
@@ -295,6 +312,39 @@ class GameManager: ObservableObject {
         ballSortLevelsCompleted = ballSortLevels.filter { $0.stars > 0 }.count
     }
 
+    // MARK: - Hint Management
+
+    /// Checks if hints should be reset (new day)
+    private func checkHintReset() {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: Date())
+
+        if let lastHintDate = defaults.object(forKey: Keys.lastHintDate) as? Date {
+            let lastDay = calendar.startOfDay(for: lastHintDate)
+            if lastDay < today {
+                // New day, reset hints
+                hintsUsedToday = 0
+                defaults.set(0, forKey: Keys.hintsUsedToday)
+                defaults.set(today, forKey: Keys.lastHintDate)
+            }
+        } else {
+            // First time, initialize
+            defaults.set(today, forKey: Keys.lastHintDate)
+        }
+    }
+
+    /// Uses a hint if available. Returns true if successful.
+    @discardableResult
+    func useHint() -> Bool {
+        guard canUseHint else { return false }
+
+        hintsUsedToday += 1
+        defaults.set(hintsUsedToday, forKey: Keys.hintsUsedToday)
+        defaults.set(Date(), forKey: Keys.lastHintDate)
+
+        return true
+    }
+
     // MARK: - Streak Management
     
     private func updateStreak() {
@@ -420,6 +470,9 @@ class GameManager: ObservableObject {
            let decoded = try? JSONDecoder().decode([BallSortLevel].self, from: data) {
             ballSortLevels = decoded
         }
+
+        // Load hints
+        hintsUsedToday = defaults.integer(forKey: Keys.hintsUsedToday)
     }
     
     // MARK: - Debug/Reset
@@ -437,12 +490,17 @@ class GameManager: ObservableObject {
         ballSortTotalStars = 0
         ballSortLevelsCompleted = 0
 
+        // Reset hints
+        hintsUsedToday = 0
+
         defaults.removeObject(forKey: Keys.levels)
         defaults.removeObject(forKey: Keys.currentStreak)
         defaults.removeObject(forKey: Keys.longestStreak)
         defaults.removeObject(forKey: Keys.lastPlayedDate)
         defaults.removeObject(forKey: Keys.dailyChallenges)
         defaults.removeObject(forKey: Keys.ballSortLevels)
+        defaults.removeObject(forKey: Keys.hintsUsedToday)
+        defaults.removeObject(forKey: Keys.lastHintDate)
 
         generateLevels()
         generateBallSortLevels()

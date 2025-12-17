@@ -162,17 +162,21 @@ struct GameView: View {
                                         ProgressView()
                                             .progressViewStyle(CircularProgressViewStyle(tint: .white))
                                     } else {
-                                        Label("Hint", systemImage: "lightbulb.fill")
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "lightbulb.fill")
+                                            Text("\(gameManager.hintsRemaining)")
+                                                .font(.caption.weight(.bold))
+                                        }
                                     }
                                 }
                                 .font(.headline)
-                                .foregroundColor(.yellow)
+                                .foregroundColor(gameManager.canUseHint ? .yellow : .gray)
                                 .padding(.horizontal, 16)
                                 .padding(.vertical, 12)
-                                .background(Color.yellow.opacity(0.2))
+                                .background(gameManager.canUseHint ? Color.yellow.opacity(0.2) : Color.gray.opacity(0.2))
                                 .clipShape(Capsule())
                             }
-                            .disabled(isCalculatingHint)
+                            .disabled(isCalculatingHint || !gameManager.canUseHint)
 
                             Button(action: submitGuess) {
                                 Label("Submit", systemImage: "checkmark.circle.fill")
@@ -356,7 +360,7 @@ struct GameView: View {
     }
 
     private func requestHint() {
-        guard !isCalculatingHint else { return }
+        guard !isCalculatingHint, gameManager.canUseHint else { return }
 
         isCalculatingHint = true
         HapticManager.shared.selection()
@@ -369,6 +373,9 @@ struct GameView: View {
             DispatchQueue.main.async {
                 isCalculatingHint = false
                 if let hint = hint {
+                    // Consume a daily hint
+                    gameManager.useHint()
+
                     currentHint = hint
                     withAnimation {
                         showingHint = true
