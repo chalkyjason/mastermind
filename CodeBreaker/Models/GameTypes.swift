@@ -381,13 +381,145 @@ struct BallSortLevel: Identifiable, Codable {
 
 struct SeededRandomNumberGenerator: RandomNumberGenerator {
     var state: UInt64
-    
+
     init(seed: UInt64) {
         state = seed
     }
-    
+
     mutating func next() -> UInt64 {
         state = state &* 6364136223846793005 &+ 1442695040888963407
         return state
+    }
+}
+
+// MARK: - Binary Grid Cell
+
+enum BinaryGridCell: Int, Codable, Equatable {
+    case empty = 0
+    case red = 1
+    case blue = 2
+
+    var color: Color {
+        switch self {
+        case .empty: return Color.white.opacity(0.1)
+        case .red: return Color("PegRed")
+        case .blue: return Color("PegBlue")
+        }
+    }
+
+    var pattern: String {
+        switch self {
+        case .empty: return ""
+        case .red: return "circle.fill"
+        case .blue: return "square.fill"
+        }
+    }
+
+    func next() -> BinaryGridCell {
+        switch self {
+        case .empty: return .red
+        case .red: return .blue
+        case .blue: return .empty
+        }
+    }
+}
+
+// MARK: - Binary Grid Difficulty
+
+enum BinaryGridDifficulty: Int, CaseIterable, Codable {
+    case tiny = 0      // 4x4
+    case small = 1     // 6x6
+    case medium = 2    // 8x8
+    case large = 3     // 10x10
+    case huge = 4      // 12x12
+
+    var name: String {
+        switch self {
+        case .tiny: return "Tiny"
+        case .small: return "Small"
+        case .medium: return "Medium"
+        case .large: return "Large"
+        case .huge: return "Huge"
+        }
+    }
+
+    var gridSize: Int {
+        switch self {
+        case .tiny: return 4
+        case .small: return 6
+        case .medium: return 8
+        case .large: return 10
+        case .huge: return 12
+        }
+    }
+
+    var levelsCount: Int {
+        switch self {
+        case .tiny: return 20
+        case .small: return 30
+        case .medium: return 40
+        case .large: return 50
+        case .huge: return 60
+        }
+    }
+
+    /// Number of pre-filled cells (higher = easier)
+    var prefilledPercentage: Double {
+        switch self {
+        case .tiny: return 0.45
+        case .small: return 0.40
+        case .medium: return 0.35
+        case .large: return 0.30
+        case .huge: return 0.25
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .tiny: return "square.grid.2x2.fill"
+        case .small: return "square.grid.3x3.fill"
+        case .medium: return "square.grid.4x3.fill"
+        case .large: return "rectangle.grid.3x2.fill"
+        case .huge: return "tablecells.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .tiny: return .green
+        case .small: return .blue
+        case .medium: return .orange
+        case .large: return .purple
+        case .huge: return Color("AccentGold")
+        }
+    }
+}
+
+// MARK: - Binary Grid Level
+
+struct BinaryGridLevel: Identifiable, Codable {
+    let id: Int
+    let difficulty: BinaryGridDifficulty
+    let levelInDifficulty: Int
+    var stars: Int = 0
+    var isUnlocked: Bool = false
+    var bestTime: TimeInterval?
+
+    var displayName: String {
+        "\(difficulty.name) \(levelInDifficulty)"
+    }
+
+    /// Calculate stars based on completion time
+    static func calculateStars(time: TimeInterval, gridSize: Int) -> Int {
+        // Base time expectations scale with grid size
+        let baseTime = Double(gridSize * gridSize) * 1.5 // 1.5 seconds per cell expected
+        let ratio = time / baseTime
+        if ratio <= 0.5 {
+            return 3
+        } else if ratio <= 1.0 {
+            return 2
+        } else {
+            return 1
+        }
     }
 }

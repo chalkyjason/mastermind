@@ -18,6 +18,11 @@ class GameManager: ObservableObject {
     @Published var ballSortTotalStars: Int = 0
     @Published var ballSortLevelsCompleted: Int = 0
 
+    // Binary Grid
+    @Published var binaryGridLevels: [BinaryGridLevel] = []
+    @Published var binaryGridTotalStars: Int = 0
+    @Published var binaryGridLevelsCompleted: Int = 0
+
     // Hints
     @Published var hintsUsedToday: Int = 0
     static let maxDailyHints = 3
@@ -32,6 +37,7 @@ class GameManager: ObservableObject {
         static let lastPlayedDate = "lastPlayedDate"
         static let dailyChallenges = "completedDailyChallenges"
         static let ballSortLevels = "ballSortLevels"
+        static let binaryGridLevels = "binaryGridLevels"
         static let hintsUsedToday = "hintsUsedToday"
         static let lastHintDate = "lastHintDate"
     }
@@ -57,6 +63,7 @@ class GameManager: ObservableObject {
         loadData()
         generateLevels()
         generateBallSortLevels()
+        generateBinaryGridLevels()
         checkDailyChallenge()
         updateStreak()
         checkHintReset()
@@ -312,6 +319,109 @@ class GameManager: ObservableObject {
         ballSortLevelsCompleted = ballSortLevels.filter { $0.stars > 0 }.count
     }
 
+    // MARK: - Binary Grid Level Generation
+
+    private func generateBinaryGridLevels() {
+        guard binaryGridLevels.isEmpty else {
+            calculateBinaryGridStats()
+            return
+        }
+
+        var allLevels: [BinaryGridLevel] = []
+        var levelId = 0
+
+        for difficulty in BinaryGridDifficulty.allCases {
+            for levelNum in 1...difficulty.levelsCount {
+                let isUnlocked = difficulty == .tiny && levelNum == 1
+                let level = BinaryGridLevel(
+                    id: levelId,
+                    difficulty: difficulty,
+                    levelInDifficulty: levelNum,
+                    isUnlocked: isUnlocked
+                )
+                allLevels.append(level)
+                levelId += 1
+            }
+        }
+
+        binaryGridLevels = allLevels
+        saveData()
+        calculateBinaryGridStats()
+    }
+
+    // MARK: - Binary Grid Level Progression
+
+    func binaryGridLevels(for difficulty: BinaryGridDifficulty) -> [BinaryGridLevel] {
+        binaryGridLevels.filter { $0.difficulty == difficulty }
+    }
+
+    func completeBinaryGridLevel(_ levelId: Int, stars: Int, time: TimeInterval) {
+        guard let index = binaryGridLevels.firstIndex(where: { $0.id == levelId }) else { return }
+
+        let previousStars = binaryGridLevels[index].stars
+
+        // Update stars if better
+        if stars > binaryGridLevels[index].stars {
+            binaryGridLevels[index].stars = stars
+        }
+
+        // Update best time if better
+        if let bestTime = binaryGridLevels[index].bestTime {
+            if time < bestTime {
+                binaryGridLevels[index].bestTime = time
+            }
+        } else {
+            binaryGridLevels[index].bestTime = time
+        }
+
+        // Unlock next level
+        if index + 1 < binaryGridLevels.count && !binaryGridLevels[index + 1].isUnlocked {
+            binaryGridLevels[index + 1].isUnlocked = true
+
+            let currentDifficulty = binaryGridLevels[index].difficulty
+            let nextDifficulty = binaryGridLevels[index + 1].difficulty
+            if currentDifficulty != nextDifficulty {
+                HapticManager.shared.tierUnlocked()
+            } else {
+                HapticManager.shared.levelUnlocked()
+            }
+        }
+
+        // Update streak
+        updateStreakOnWin()
+
+        // Recalculate stats
+        calculateBinaryGridStats()
+
+        // Save progress
+        saveData()
+
+        // Notify notification manager
+        NotificationManager.shared.userDidPlay()
+
+        // Report to Game Center
+        if stars > previousStars {
+            GameCenterManager.shared.reportBinaryGridCompletion(levelId: levelId, stars: stars)
+        }
+    }
+
+    func isBinaryGridDifficultyUnlocked(_ difficulty: BinaryGridDifficulty) -> Bool {
+        binaryGridLevels.first(where: { $0.difficulty == difficulty })?.isUnlocked ?? false
+    }
+
+    func binaryGridDifficultyProgress(_ difficulty: BinaryGridDifficulty) -> (completed: Int, total: Int, stars: Int, maxStars: Int) {
+        let difficultyLevels = binaryGridLevels(for: difficulty)
+        let completed = difficultyLevels.filter { $0.stars > 0 }.count
+        let stars = difficultyLevels.reduce(0) { $0 + $1.stars }
+        let maxStars = difficultyLevels.count * 3
+        return (completed, difficultyLevels.count, stars, maxStars)
+    }
+
+    private func calculateBinaryGridStats() {
+        binaryGridTotalStars = binaryGridLevels.reduce(0) { $0 + $1.stars }
+        binaryGridLevelsCompleted = binaryGridLevels.filter { $0.stars > 0 }.count
+    }
+
     // MARK: - Hint Management
 
     /// Checks if hints should be reset (new day)
@@ -428,6 +538,11 @@ class GameManager: ObservableObject {
             defaults.set(encoded, forKey: Keys.ballSortLevels)
         }
 
+        // Save Binary Grid levels
+        if let encoded = try? JSONEncoder().encode(binaryGridLevels) {
+            defaults.set(encoded, forKey: Keys.binaryGridLevels)
+        }
+
         // Sync to widget
         syncToWidget()
     }
@@ -471,6 +586,12 @@ class GameManager: ObservableObject {
             ballSortLevels = decoded
         }
 
+        // Load Binary Grid levels
+        if let data = defaults.data(forKey: Keys.binaryGridLevels),
+           let decoded = try? JSONDecoder().decode([BinaryGridLevel].self, from: data) {
+            binaryGridLevels = decoded
+        }
+
         // Load hints
         hintsUsedToday = defaults.integer(forKey: Keys.hintsUsedToday)
     }
@@ -490,6 +611,11 @@ class GameManager: ObservableObject {
         ballSortTotalStars = 0
         ballSortLevelsCompleted = 0
 
+        // Reset Binary Grid
+        binaryGridLevels = []
+        binaryGridTotalStars = 0
+        binaryGridLevelsCompleted = 0
+
         // Reset hints
         hintsUsedToday = 0
 
@@ -499,11 +625,13 @@ class GameManager: ObservableObject {
         defaults.removeObject(forKey: Keys.lastPlayedDate)
         defaults.removeObject(forKey: Keys.dailyChallenges)
         defaults.removeObject(forKey: Keys.ballSortLevels)
+        defaults.removeObject(forKey: Keys.binaryGridLevels)
         defaults.removeObject(forKey: Keys.hintsUsedToday)
         defaults.removeObject(forKey: Keys.lastHintDate)
 
         generateLevels()
         generateBallSortLevels()
+        generateBinaryGridLevels()
         checkDailyChallenge()
     }
 }
