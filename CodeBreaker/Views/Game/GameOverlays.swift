@@ -123,7 +123,7 @@ struct WinOverlayView: View {
                                 )
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
-                        .buttonStyle(ScaleButtonStyle())
+
                     }
 
                     Button(action: {
@@ -138,7 +138,6 @@ struct WinOverlayView: View {
                             .background(Color("AccentGreen"))
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    .buttonStyle(ScaleButtonStyle())
 
                     if !isDaily {
                         Button(action: {
@@ -153,7 +152,7 @@ struct WinOverlayView: View {
                                 .background(Color.white.opacity(0.2))
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                         }
-                        .buttonStyle(ScaleButtonStyle())
+
                     }
                 }
                 .padding(.horizontal, 32)
@@ -381,7 +380,6 @@ struct LoseOverlayView: View {
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                             .shadow(color: Color("AccentPurple").opacity(0.4), radius: 8, y: 4)
                         }
-                        .buttonStyle(ScaleButtonStyle())
                         .disabled(isLoadingAd)
                     }
 
@@ -398,7 +396,6 @@ struct LoseOverlayView: View {
                             .background(livesManager.hasLives ? Color("AccentOrange") : Color.gray)
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    .buttonStyle(ScaleButtonStyle())
                     .disabled(!livesManager.hasLives)
 
                     Button(action: onQuit) {
@@ -410,7 +407,6 @@ struct LoseOverlayView: View {
                             .background(Color.white.opacity(0.2))
                             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                     }
-                    .buttonStyle(ScaleButtonStyle())
                 }
                 .padding(.horizontal, 32)
                 .offset(y: showContent ? 0 : 30)
@@ -546,16 +542,6 @@ struct ConfettiPiece: View {
                     rotationAmount = particle.rotation + 720
                 }
             }
-    }
-}
-
-// MARK: - Scale Button Style
-
-struct ScaleButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
     }
 }
 
