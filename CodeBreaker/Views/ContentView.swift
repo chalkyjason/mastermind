@@ -5,6 +5,7 @@ struct ContentView: View {
     @State private var showingGame = false
     @State private var showingLevelSelect = false
     @State private var showingBallSort = false
+    @State private var showingBinaryGrid = false
     @State private var showingDailyChallenge = false
     @State private var showingTimeAttack = false
     @State private var showingSettings = false
@@ -76,9 +77,18 @@ struct ContentView: View {
                         }
 
                         MenuButton(
+                            title: "Binary Grid",
+                            icon: "square.grid.3x3.fill",
+                            color: Color("AccentPurple")
+                        ) {
+                            SoundManager.shared.buttonTap()
+                            showingBinaryGrid = true
+                        }
+
+                        MenuButton(
                             title: "Daily Challenge",
                             icon: "calendar.badge.clock",
-                            color: Color("AccentPurple"),
+                            color: Color("PegPink"),
                             badge: gameManager.hasDailyChallengeAvailable ? "NEW" : nil
                         ) {
                             SoundManager.shared.buttonTap()
@@ -127,6 +137,9 @@ struct ContentView: View {
             }
             .navigationDestination(isPresented: $showingBallSort) {
                 BallSortLevelSelectView()
+            }
+            .navigationDestination(isPresented: $showingBinaryGrid) {
+                BinaryGridLevelSelectView()
             }
             .navigationDestination(isPresented: $showingDailyChallenge) {
                 DailyChallengeView()

@@ -161,6 +161,13 @@ class GameCenterManager: ObservableObject {
         #endif
     }
 
+    func reportBinaryGridCompletion(levelId: Int, stars: Int) {
+        // Report Binary Grid level completion
+        #if DEBUG
+        print("Binary Grid level \(levelId) completed with \(stars) stars")
+        #endif
+    }
+
     // MARK: - Achievements
     
     func unlockAchievement(_ achievement: AchievementID, percentComplete: Double = 100.0) {
