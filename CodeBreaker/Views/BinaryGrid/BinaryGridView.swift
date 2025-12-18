@@ -6,14 +6,27 @@ struct BinaryGridView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingWinSheet = false
-    @State private var elapsedTime: TimeInterval = 0
+    @State private var showingLoseSheet = false
+    @State private var timeRemaining: TimeInterval
     @State private var timer: Timer?
 
     let level: BinaryGridLevel?
+    let timeLimit: TimeInterval
 
     init(difficulty: BinaryGridDifficulty, level: BinaryGridLevel? = nil) {
         self.level = level
         _game = StateObject(wrappedValue: BinaryGridGame(difficulty: difficulty, level: level))
+
+        // Time limit scales with grid size: 2 minutes for 4x4, scaling up
+        let baseTime: TimeInterval = switch difficulty {
+        case .tiny: 120      // 2 minutes
+        case .small: 180     // 3 minutes
+        case .medium: 300    // 5 minutes
+        case .large: 420     // 7 minutes
+        case .huge: 600      // 10 minutes
+        }
+        self.timeLimit = baseTime
+        _timeRemaining = State(initialValue: baseTime)
     }
 
     var body: some View {
@@ -30,9 +43,11 @@ struct BinaryGridView: View {
                 // Header
                 BinaryGridHeaderView(
                     title: headerTitle,
-                    elapsedTime: elapsedTime,
+                    timeRemaining: timeRemaining,
+                    timeLimit: timeLimit,
                     remainingCells: game.remainingCells,
-                    onPause: {
+                    errorCount: game.errorCells.count,
+                    onBack: {
                         HapticManager.shared.navigate()
                         dismiss()
                     }
@@ -46,8 +61,23 @@ struct BinaryGridView: View {
 
                 Spacer()
 
-                // Rules reminder and clear button
+                // Bottom controls
                 VStack(spacing: 16) {
+                    // Error indicator
+                    if game.errorCells.count > 0 {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundColor(.red)
+                            Text("\(game.errorCells.count) rule violation\(game.errorCells.count == 1 ? "" : "s")")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundColor(.red)
+                        }
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        .background(Color.red.opacity(0.2))
+                        .clipShape(Capsule())
+                    }
+
                     // Rules hint
                     HStack(spacing: 16) {
                         RuleHintView(icon: "3.circle", text: "No 3 in a row")
@@ -56,17 +86,45 @@ struct BinaryGridView: View {
                     }
                     .padding(.horizontal)
 
-                    // Clear button
-                    Button(action: {
-                        game.clearUserInput()
-                    }) {
-                        Label("Clear", systemImage: "arrow.counterclockwise")
-                            .font(.headline)
-                            .foregroundColor(.white.opacity(0.8))
-                            .padding(.horizontal, 24)
-                            .padding(.vertical, 12)
-                            .background(Color.white.opacity(0.2))
-                            .clipShape(Capsule())
+                    // Action buttons
+                    HStack(spacing: 12) {
+                        Button(action: {
+                            HapticManager.shared.impact(.medium)
+                            dismiss()
+                        }) {
+                            Label("Menu", systemImage: "house.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Capsule())
+                        }
+
+                        Button(action: {
+                            HapticManager.shared.impact(.medium)
+                            handleReplay()
+                        }) {
+                            Label("Restart", systemImage: "arrow.counterclockwise")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Capsule())
+                        }
+
+                        Button(action: {
+                            game.clearUserInput()
+                        }) {
+                            Label("Clear", systemImage: "trash")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundColor(.white.opacity(0.8))
+                                .padding(.horizontal, 20)
+                                .padding(.vertical, 12)
+                                .background(Color.white.opacity(0.2))
+                                .clipShape(Capsule())
+                        }
                     }
                 }
                 .padding()
@@ -76,11 +134,21 @@ struct BinaryGridView: View {
             // Win overlay
             if showingWinSheet {
                 BinaryGridWinOverlayView(
-                    time: elapsedTime,
+                    time: timeLimit - timeRemaining,
                     stars: calculateStars(),
                     gridSize: game.gridSize,
                     onContinue: handleWinContinue,
                     onReplay: handleReplay
+                )
+                .transition(.opacity)
+            }
+
+            // Lose overlay (time's up)
+            if showingLoseSheet {
+                BinaryGridLoseOverlayView(
+                    gridSize: game.gridSize,
+                    onRetry: handleReplay,
+                    onMenu: { dismiss() }
                 )
                 .transition(.opacity)
             }
@@ -114,18 +182,43 @@ struct BinaryGridView: View {
     }
 
     private func calculateStars() -> Int {
-        BinaryGridLevel.calculateStars(time: elapsedTime, gridSize: game.gridSize)
+        let elapsedTime = timeLimit - timeRemaining
+        return BinaryGridLevel.calculateStars(time: elapsedTime, gridSize: game.gridSize)
     }
 
     private func startTimer() {
-        timer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { _ in
-            elapsedTime = game.elapsedTime
+        timer = Timer.scheduledTimer(withTimeInterval: 1.0, repeats: true) { _ in
+            if timeRemaining > 0 {
+                timeRemaining -= 1
+
+                // Warning haptic at 30 seconds
+                if timeRemaining == 30 {
+                    HapticManager.shared.notification(.warning)
+                }
+                // Warning haptic at 10 seconds
+                if timeRemaining == 10 {
+                    HapticManager.shared.notification(.warning)
+                }
+            } else {
+                // Time's up!
+                handleTimeUp()
+            }
         }
     }
 
     private func stopTimer() {
         timer?.invalidate()
         timer = nil
+    }
+
+    private func handleTimeUp() {
+        stopTimer()
+        game.gameState = .lost
+        HapticManager.shared.notification(.error)
+        SoundManager.shared.wrongGuess()
+        withAnimation {
+            showingLoseSheet = true
+        }
     }
 
     private func handleGameStateChange(_ state: BinaryGridState) {
@@ -137,15 +230,19 @@ struct BinaryGridView: View {
                     showingWinSheet = true
                 }
             }
+        case .lost:
+            stopTimer()
         default:
             break
         }
     }
 
     private func handleWinContinue() {
-        if case .won(let time, let stars) = game.gameState {
+        if case .won = game.gameState {
+            let elapsedTime = timeLimit - timeRemaining
+            let stars = BinaryGridLevel.calculateStars(time: elapsedTime, gridSize: game.gridSize)
             if let level = level {
-                gameManager.completeBinaryGridLevel(level.id, stars: stars, time: time)
+                gameManager.completeBinaryGridLevel(level.id, stars: stars, time: elapsedTime)
             }
         }
         dismiss()
@@ -153,8 +250,9 @@ struct BinaryGridView: View {
 
     private func handleReplay() {
         showingWinSheet = false
+        showingLoseSheet = false
         game.restart()
-        elapsedTime = 0
+        timeRemaining = timeLimit
         startTimer()
     }
 }
@@ -163,13 +261,29 @@ struct BinaryGridView: View {
 
 struct BinaryGridHeaderView: View {
     let title: String
-    let elapsedTime: TimeInterval
+    let timeRemaining: TimeInterval
+    let timeLimit: TimeInterval
     let remainingCells: Int
-    let onPause: () -> Void
+    let errorCount: Int
+    let onBack: () -> Void
+
+    private var timeProgress: Double {
+        timeRemaining / timeLimit
+    }
+
+    private var timeColor: Color {
+        if timeRemaining <= 10 {
+            return .red
+        } else if timeRemaining <= 30 {
+            return .orange
+        } else {
+            return .white
+        }
+    }
 
     var body: some View {
         HStack {
-            Button(action: onPause) {
+            Button(action: onBack) {
                 Image(systemName: "chevron.left")
                     .font(.title2.weight(.semibold))
                     .foregroundColor(.white)
@@ -186,20 +300,30 @@ struct BinaryGridHeaderView: View {
 
             Spacer()
 
-            // Timer and remaining
-            VStack(alignment: .trailing, spacing: 2) {
-                Text(formatTime(elapsedTime))
-                    .font(.headline.monospacedDigit())
-                    .foregroundColor(.white)
+            // Timer with progress ring
+            ZStack {
+                // Background ring
+                Circle()
+                    .stroke(Color.white.opacity(0.2), lineWidth: 4)
+                    .frame(width: 50, height: 50)
 
-                Text("\(remainingCells) left")
-                    .font(.caption)
-                    .foregroundColor(.white.opacity(0.7))
+                // Progress ring
+                Circle()
+                    .trim(from: 0, to: timeProgress)
+                    .stroke(timeColor, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                    .frame(width: 50, height: 50)
+                    .rotationEffect(.degrees(-90))
+
+                VStack(spacing: 0) {
+                    Text(formatTime(timeRemaining))
+                        .font(.caption.weight(.bold).monospacedDigit())
+                        .foregroundColor(timeColor)
+
+                    Text("\(remainingCells)")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.7))
+                }
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color.white.opacity(0.2))
-            .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
         }
         .padding()
     }
@@ -244,7 +368,7 @@ struct BinaryGridBoardView: View {
 
     private func calculateCellSize() -> CGFloat {
         let screenWidth = UIScreen.main.bounds.width
-        let padding: CGFloat = 32 + 16 + CGFloat(game.gridSize - 1) * 2 // horizontal padding + gaps
+        let padding: CGFloat = 32 + 16 + CGFloat(game.gridSize - 1) * 2
         let availableWidth = screenWidth - padding
         return min(availableWidth / CGFloat(game.gridSize), 50)
     }
@@ -285,7 +409,6 @@ struct BinaryGridCellView: View {
                 }
 
                 if isLocked && cell != .empty {
-                    // Lock indicator
                     Circle()
                         .stroke(Color.white.opacity(0.3), lineWidth: 2)
                         .frame(width: size * 0.7, height: size * 0.7)
@@ -348,12 +471,10 @@ struct BinaryGridWinOverlayView: View {
                 .ignoresSafeArea()
 
             VStack(spacing: 24) {
-                // Title
                 Text("Puzzle Complete!")
                     .font(.largeTitle.weight(.bold))
                     .foregroundColor(.white)
 
-                // Stars
                 HStack(spacing: 12) {
                     ForEach(0..<3) { index in
                         Image(systemName: index < stars ? "star.fill" : "star")
@@ -363,7 +484,6 @@ struct BinaryGridWinOverlayView: View {
                     }
                 }
 
-                // Stats
                 VStack(spacing: 8) {
                     HStack {
                         Image(systemName: "clock.fill")
@@ -381,7 +501,6 @@ struct BinaryGridWinOverlayView: View {
                 }
                 .font(.headline)
 
-                // Buttons
                 VStack(spacing: 12) {
                     Button(action: onContinue) {
                         Text("Continue")
@@ -413,6 +532,61 @@ struct BinaryGridWinOverlayView: View {
         let minutes = Int(time) / 60
         let seconds = Int(time) % 60
         return String(format: "%d:%02d", minutes, seconds)
+    }
+}
+
+// MARK: - Lose Overlay View
+
+struct BinaryGridLoseOverlayView: View {
+    let gridSize: Int
+    let onRetry: () -> Void
+    let onMenu: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.8)
+                .ignoresSafeArea()
+
+            VStack(spacing: 24) {
+                Image(systemName: "clock.badge.xmark.fill")
+                    .font(.system(size: 60))
+                    .foregroundColor(.red)
+
+                Text("Time's Up!")
+                    .font(.largeTitle.weight(.bold))
+                    .foregroundColor(.white)
+
+                Text("You ran out of time to complete the \(gridSize)x\(gridSize) puzzle.")
+                    .font(.body)
+                    .foregroundColor(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
+
+                VStack(spacing: 12) {
+                    Button(action: onRetry) {
+                        Label("Try Again", systemImage: "arrow.counterclockwise")
+                            .font(.headline.weight(.bold))
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 16)
+                            .background(Color("AccentBlue"))
+                            .clipShape(Capsule())
+                    }
+
+                    Button(action: onMenu) {
+                        Label("Back to Menu", systemImage: "house.fill")
+                            .font(.headline)
+                            .foregroundColor(.white.opacity(0.8))
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 14)
+                            .background(Color.white.opacity(0.2))
+                            .clipShape(Capsule())
+                    }
+                }
+                .padding(.horizontal, 32)
+            }
+            .padding(32)
+        }
     }
 }
 
