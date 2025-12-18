@@ -20,8 +20,6 @@
 		C1000001 /* BallSortGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001 /* BallSortGame.swift */; };
 		C1000002 /* BallSortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002 /* BallSortView.swift */; };
 		C1000003 /* BallSortLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003 /* BallSortLevelSelectView.swift */; };
-		799256772EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */; };
-		799256792EE753F4006215AA /* Assets.xcassetsContents.json in Resources */ = {isa = PBXBuildFile; fileRef = 799256782EE753F4006215AA /* Assets.xcassetsContents.json */; };
 		A1000001 /* CodeBreakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CodeBreakerApp.swift */; };
 		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* ContentView.swift */; };
 		A1000003 /* GameTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* GameTypes.swift */; };
@@ -53,8 +51,6 @@
 		D2000002 /* BinaryGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridView.swift; sourceTree = "<group>"; };
 		D2000003 /* BinaryGridLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridLevelSelectView.swift; sourceTree = "<group>"; };
 		D2000004 /* GameModeSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModeSelectView.swift; sourceTree = "<group>"; };
-		799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsAppIcon.appiconsetContents.json; sourceTree = "<group>"; };
-		799256782EE753F4006215AA /* Assets.xcassetsContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsContents.json; sourceTree = "<group>"; };
 		79D5DE2C2EF08567004BCA5D /* CodeBreaker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CodeBreaker.entitlements; sourceTree = "<group>"; };
 		A2000001 /* CodeBreakerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBreakerApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -172,8 +168,6 @@
 			isa = PBXGroup;
 			children = (
 				A2000014 /* Assets.xcassets */,
-				799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */,
-				799256782EE753F4006215AA /* Assets.xcassetsContents.json */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -267,8 +261,6 @@
 			buildActionMask = 2147483647;
 			files = (
 				A1000014 /* Assets.xcassets in Resources */,
-				799256792EE753F4006215AA /* Assets.xcassetsContents.json in Resources */,
-				799256772EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
