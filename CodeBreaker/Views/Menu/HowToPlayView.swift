@@ -5,11 +5,13 @@ import SwiftUI
 enum GameMode: String, CaseIterable {
     case codeBreaker = "Code Breaker"
     case ballSort = "Ball Sort"
+    case binaryGrid = "Binary Grid"
 
     var icon: String {
         switch self {
         case .codeBreaker: return "lock.shield"
         case .ballSort: return "testtube.2"
+        case .binaryGrid: return "square.grid.3x3.fill"
         }
     }
 }
@@ -91,8 +93,51 @@ struct HowToPlayView: View {
         )
     ]
 
+    let binaryGridPages: [TutorialPage] = [
+        TutorialPage(
+            title: "Fill the Grid",
+            description: "Your goal is to fill every cell with either a red or blue ball following three simple rules.",
+            imageName: "square.grid.3x3.fill",
+            binaryGridDemo: .goal
+        ),
+        TutorialPage(
+            title: "Tap to Place",
+            description: "Tap an empty cell to place red, tap again for blue, and again to clear. Locked cells cannot be changed.",
+            imageName: "hand.tap",
+            binaryGridDemo: .tap
+        ),
+        TutorialPage(
+            title: "Rule 1: No Three in a Row",
+            description: "You cannot have three consecutive balls of the same color in any row or column.",
+            imageName: "3.circle",
+            binaryGridDemo: .noThree
+        ),
+        TutorialPage(
+            title: "Rule 2: Equal Colors",
+            description: "Each row and column must have an equal number of red and blue balls.",
+            imageName: "equal.circle",
+            binaryGridDemo: .equal
+        ),
+        TutorialPage(
+            title: "Rule 3: Unique Lines",
+            description: "No two rows can be identical. No two columns can be identical.",
+            imageName: "rectangle.stack",
+            binaryGridDemo: .unique
+        ),
+        TutorialPage(
+            title: "Complete the Puzzle",
+            description: "Fill every cell while following all three rules to win. Faster times = more stars!",
+            imageName: "star.fill",
+            binaryGridDemo: .win
+        )
+    ]
+
     var currentPages: [TutorialPage] {
-        selectedMode == .codeBreaker ? codeBreakerPages : ballSortPages
+        switch selectedMode {
+        case .codeBreaker: return codeBreakerPages
+        case .ballSort: return ballSortPages
+        case .binaryGrid: return binaryGridPages
+        }
     }
 
     var body: some View {
@@ -229,6 +274,17 @@ enum BallSortDemoType {
     case win
 }
 
+// MARK: - Binary Grid Demo Type
+
+enum BinaryGridDemoType {
+    case goal
+    case tap
+    case noThree
+    case equal
+    case unique
+    case win
+}
+
 // MARK: - Tutorial Page Model
 
 struct TutorialPage {
@@ -238,6 +294,7 @@ struct TutorialPage {
     var colors: [PegColor]? = nil
     var feedbackDemo: FeedbackPeg? = nil
     var ballSortDemo: BallSortDemoType? = nil
+    var binaryGridDemo: BinaryGridDemoType? = nil
 }
 
 // MARK: - Tutorial Page View
@@ -309,6 +366,12 @@ struct TutorialPageView: View {
             // Ball Sort demo if applicable
             if let ballSortDemo = page.ballSortDemo {
                 BallSortDemoView(demoType: ballSortDemo)
+                    .padding(.top, 16)
+            }
+
+            // Binary Grid demo if applicable
+            if let binaryGridDemo = page.binaryGridDemo {
+                BinaryGridDemoView(demoType: binaryGridDemo)
                     .padding(.top, 16)
             }
 
@@ -567,6 +630,292 @@ struct MiniTubeShape: Shape {
         path.addLine(to: CGPoint(x: rect.width, y: 0))
 
         return path
+    }
+}
+
+// MARK: - Binary Grid Demo View
+
+struct BinaryGridDemoView: View {
+    let demoType: BinaryGridDemoType
+
+    var body: some View {
+        VStack(spacing: 12) {
+            switch demoType {
+            case .goal:
+                goalDemo
+            case .tap:
+                tapDemo
+            case .noThree:
+                noThreeDemo
+            case .equal:
+                equalDemo
+            case .unique:
+                uniqueDemo
+            case .win:
+                winDemo
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Goal Demo
+
+    private var goalDemo: some View {
+        HStack(spacing: 8) {
+            MiniGridView(cells: [
+                [.red, .empty, .blue, .empty],
+                [.empty, .blue, .empty, .red],
+                [.blue, .empty, .red, .empty],
+                [.empty, .red, .empty, .blue]
+            ])
+
+            Image(systemName: "arrow.right")
+                .foregroundColor(.white.opacity(0.5))
+                .font(.title3)
+
+            MiniGridView(cells: [
+                [.red, .blue, .blue, .red],
+                [.blue, .blue, .red, .red],
+                [.blue, .red, .red, .blue],
+                [.red, .red, .blue, .blue]
+            ], isComplete: true)
+        }
+    }
+
+    // MARK: - Tap Demo
+
+    private var tapDemo: some View {
+        HStack(spacing: 20) {
+            VStack(spacing: 4) {
+                MiniCellView(cell: .empty, size: 36)
+                Text("Empty")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+            Image(systemName: "arrow.right")
+                .foregroundColor(.white.opacity(0.5))
+
+            VStack(spacing: 4) {
+                MiniCellView(cell: .red, size: 36)
+                Text("Tap 1")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+            Image(systemName: "arrow.right")
+                .foregroundColor(.white.opacity(0.5))
+
+            VStack(spacing: 4) {
+                MiniCellView(cell: .blue, size: 36)
+                Text("Tap 2")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+
+            Image(systemName: "arrow.right")
+                .foregroundColor(.white.opacity(0.5))
+
+            VStack(spacing: 4) {
+                MiniCellView(cell: .empty, size: 36)
+                Text("Tap 3")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.6))
+            }
+        }
+    }
+
+    // MARK: - No Three Demo
+
+    private var noThreeDemo: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 20) {
+                VStack(spacing: 4) {
+                    HStack(spacing: 2) {
+                        MiniCellView(cell: .red, size: 28)
+                        MiniCellView(cell: .red, size: 28)
+                        MiniCellView(cell: .blue, size: 28)
+                    }
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(Color("AccentGreen"))
+                        .font(.caption)
+                    Text("OK")
+                        .font(.caption2)
+                        .foregroundColor(Color("AccentGreen"))
+                }
+
+                VStack(spacing: 4) {
+                    HStack(spacing: 2) {
+                        MiniCellView(cell: .red, size: 28, isError: true)
+                        MiniCellView(cell: .red, size: 28, isError: true)
+                        MiniCellView(cell: .red, size: 28, isError: true)
+                    }
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                    Text("No!")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                }
+            }
+        }
+    }
+
+    // MARK: - Equal Demo
+
+    private var equalDemo: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 20) {
+                VStack(spacing: 4) {
+                    HStack(spacing: 2) {
+                        MiniCellView(cell: .red, size: 24)
+                        MiniCellView(cell: .blue, size: 24)
+                        MiniCellView(cell: .red, size: 24)
+                        MiniCellView(cell: .blue, size: 24)
+                    }
+                    Text("2 red, 2 blue")
+                        .font(.caption2)
+                        .foregroundColor(Color("AccentGreen"))
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(Color("AccentGreen"))
+                        .font(.caption)
+                }
+
+                VStack(spacing: 4) {
+                    HStack(spacing: 2) {
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .blue, size: 24)
+                    }
+                    Text("3 red, 1 blue")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                }
+            }
+        }
+    }
+
+    // MARK: - Unique Demo
+
+    private var uniqueDemo: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 16) {
+                VStack(spacing: 4) {
+                    Text("Row 1")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.5))
+                    HStack(spacing: 2) {
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .blue, size: 24, isError: true)
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .blue, size: 24, isError: true)
+                    }
+                }
+
+                Text("=")
+                    .foregroundColor(.red)
+                    .font(.headline)
+
+                VStack(spacing: 4) {
+                    Text("Row 3")
+                        .font(.caption2)
+                        .foregroundColor(.white.opacity(0.5))
+                    HStack(spacing: 2) {
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .blue, size: 24, isError: true)
+                        MiniCellView(cell: .red, size: 24, isError: true)
+                        MiniCellView(cell: .blue, size: 24, isError: true)
+                    }
+                }
+            }
+            Text("Rows must be unique!")
+                .font(.caption)
+                .foregroundColor(.red)
+        }
+    }
+
+    // MARK: - Win Demo
+
+    private var winDemo: some View {
+        HStack(spacing: 12) {
+            MiniGridView(cells: [
+                [.red, .blue, .blue, .red],
+                [.blue, .red, .red, .blue],
+                [.red, .red, .blue, .blue],
+                [.blue, .blue, .red, .red]
+            ], isComplete: true)
+
+            VStack(spacing: 2) {
+                HStack(spacing: 2) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundColor(Color("AccentYellow"))
+                    }
+                }
+                Text("Complete!")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(Color("AccentYellow"))
+            }
+        }
+    }
+}
+
+// MARK: - Mini Grid View
+
+struct MiniGridView: View {
+    let cells: [[BinaryGridCell]]
+    var isComplete: Bool = false
+
+    var body: some View {
+        VStack(spacing: 2) {
+            ForEach(0..<cells.count, id: \.self) { row in
+                HStack(spacing: 2) {
+                    ForEach(0..<cells[row].count, id: \.self) { col in
+                        MiniCellView(cell: cells[row][col], size: 20)
+                    }
+                }
+            }
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .stroke(isComplete ? Color("AccentGreen") : Color.clear, lineWidth: 2)
+        )
+    }
+}
+
+// MARK: - Mini Cell View
+
+struct MiniCellView: View {
+    let cell: BinaryGridCell
+    var size: CGFloat = 20
+    var isError: Bool = false
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(isError ? Color.red.opacity(0.2) : Color.white.opacity(0.1))
+                .frame(width: size, height: size)
+
+            if cell != .empty {
+                Circle()
+                    .fill(cell.color)
+                    .frame(width: size * 0.7, height: size * 0.7)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .stroke(isError ? Color.red : Color.white.opacity(0.2), lineWidth: isError ? 1.5 : 0.5)
+        )
     }
 }
 

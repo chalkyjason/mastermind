@@ -2,15 +2,10 @@ import SwiftUI
 
 struct ContentView: View {
     @EnvironmentObject var gameManager: GameManager
-    @State private var showingGame = false
-    @State private var showingLevelSelect = false
-    @State private var showingBallSort = false
-    @State private var showingBinaryGrid = false
-    @State private var showingDailyChallenge = false
-    @State private var showingTimeAttack = false
+    @State private var showingGameModes = false
     @State private var showingSettings = false
     @State private var showingHowToPlay = false
-    
+
     var body: some View {
         NavigationStack {
             ZStack {
@@ -21,14 +16,14 @@ struct ContentView: View {
                     endPoint: .bottom
                 )
                 .ignoresSafeArea()
-                
-                VStack(spacing: 30) {
+
+                VStack(spacing: 0) {
                     Spacer()
-                    
+
                     // Logo/Title
                     VStack(spacing: 8) {
                         Text("PUZZLE")
-                            .font(.system(size: 56, weight: .black, design: .rounded))
+                            .font(.system(size: 64, weight: .black, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [.white, .white.opacity(0.8)],
@@ -37,7 +32,7 @@ struct ContentView: View {
                                 )
                             )
                         Text("MASTER")
-                            .font(.system(size: 56, weight: .black, design: .rounded))
+                            .font(.system(size: 64, weight: .black, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
                                     colors: [Color("AccentYellow"), Color("AccentOrange")],
@@ -47,105 +42,74 @@ struct ContentView: View {
                             )
                     }
                     .shadow(color: .black.opacity(0.3), radius: 10, y: 5)
-                    
+
                     // Code preview animation
                     CodePreviewView()
                         .frame(height: 60)
-                        .padding(.vertical, 20)
-                    
+                        .padding(.vertical, 40)
+
                     Spacer()
-                    
-                    // Menu buttons
-                    VStack(spacing: 16) {
-                        // NOTE: If you see "Cannot find 'SoundManager' in scope", ensure that 'SoundManager.swift' is included in your target. No import is necessary if it is part of the same module.
-                        MenuButton(
-                            title: "Code Breaker",
-                            icon: "lock.circle.fill",
-                            color: Color("AccentGreen")
-                        ) {
-                            SoundManager.shared.buttonTap()
-                            showingLevelSelect = true
-                        }
 
-                        MenuButton(
-                            title: "Ball Sort",
-                            icon: "testtube.2",
-                            color: Color("AccentBlue")
-                        ) {
+                    // Main Play Button
+                    VStack(spacing: 20) {
+                        Button(action: {
                             SoundManager.shared.buttonTap()
-                            showingBallSort = true
+                            HapticManager.shared.impact(.medium)
+                            showingGameModes = true
+                        }) {
+                            HStack(spacing: 12) {
+                                Image(systemName: "play.fill")
+                                    .font(.title2)
+                                Text("PLAY")
+                                    .font(.title.weight(.black))
+                            }
+                            .foregroundColor(.white)
+                            .frame(maxWidth: .infinity)
+                            .padding(.vertical, 20)
+                            .background(
+                                LinearGradient(
+                                    colors: [Color("AccentGreen"), Color("AccentGreen").opacity(0.8)],
+                                    startPoint: .top,
+                                    endPoint: .bottom
+                                )
+                            )
+                            .clipShape(RoundedRectangle(cornerRadius: 20, style: .continuous))
+                            .shadow(color: Color("AccentGreen").opacity(0.5), radius: 12, y: 6)
                         }
+                        .buttonStyle(PlayButtonStyle())
 
-                        MenuButton(
-                            title: "Binary Grid",
-                            icon: "square.grid.3x3.fill",
-                            color: Color("AccentPurple")
-                        ) {
-                            SoundManager.shared.buttonTap()
-                            showingBinaryGrid = true
-                        }
-
-                        MenuButton(
-                            title: "Daily Challenge",
-                            icon: "calendar.badge.clock",
-                            color: Color("PegPink"),
-                            badge: gameManager.hasDailyChallengeAvailable ? "NEW" : nil
-                        ) {
-                            SoundManager.shared.buttonTap()
-                            showingDailyChallenge = true
-                        }
-
-                        MenuButton(
-                            title: "Time Attack",
-                            icon: "timer",
-                            color: Color("AccentOrange")
-                        ) {
-                            SoundManager.shared.buttonTap()
-                            showingTimeAttack = true
-                        }
-
+                        // Secondary buttons
                         HStack(spacing: 16) {
-                            SmallMenuButton(
+                            SecondaryButton(
                                 title: "How to Play",
-                                icon: "questionmark.circle.fill",
-                                color: Color("AccentOrange")
+                                icon: "questionmark.circle.fill"
                             ) {
+                                HapticManager.shared.impact(.light)
                                 showingHowToPlay = true
                             }
 
-                            SmallMenuButton(
+                            SecondaryButton(
                                 title: "Settings",
-                                icon: "gearshape.fill",
-                                color: Color("AccentGray")
+                                icon: "gearshape.fill"
                             ) {
+                                HapticManager.shared.impact(.light)
                                 showingSettings = true
                             }
                         }
                     }
-                    .padding(.horizontal, 24)
-                    
+                    .padding(.horizontal, 32)
+
                     Spacer()
-                    
+                        .frame(height: 40)
+
                     // Stats bar
                     StatsBarView()
                         .padding(.horizontal, 24)
                         .padding(.bottom, 20)
                 }
             }
-            .navigationDestination(isPresented: $showingLevelSelect) {
-                LevelSelectView()
-            }
-            .navigationDestination(isPresented: $showingBallSort) {
-                BallSortLevelSelectView()
-            }
-            .navigationDestination(isPresented: $showingBinaryGrid) {
-                BinaryGridLevelSelectView()
-            }
-            .navigationDestination(isPresented: $showingDailyChallenge) {
-                DailyChallengeView()
-            }
-            .navigationDestination(isPresented: $showingTimeAttack) {
-                TimeAttackView(tier: .beginner)
+            .navigationDestination(isPresented: $showingGameModes) {
+                GameModeSelectView()
             }
             .sheet(isPresented: $showingHowToPlay) {
                 HowToPlayView()
@@ -154,6 +118,41 @@ struct ContentView: View {
                 SettingsView()
             }
         }
+    }
+}
+
+// MARK: - Play Button Style
+
+struct PlayButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .scaleEffect(configuration.isPressed ? 0.96 : 1.0)
+            .animation(.spring(response: 0.3, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
+// MARK: - Secondary Button
+
+struct SecondaryButton: View {
+    let title: String
+    let icon: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.title2)
+                Text(title)
+                    .font(.caption.weight(.medium))
+            }
+            .foregroundColor(.white.opacity(0.8))
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 16)
+            .background(Color.white.opacity(0.15))
+            .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        }
+        .buttonStyle(ScaleButtonStyle())
     }
 }
 

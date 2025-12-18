@@ -391,7 +391,10 @@ class BinaryGridGame: ObservableObject {
         let elapsedTime = Date().timeIntervalSince(startTime ?? Date())
         let stars = BinaryGridLevel.calculateStars(time: elapsedTime, gridSize: gridSize)
 
+        // Explicitly notify observers before state change
+        objectWillChange.send()
         gameState = .won(time: elapsedTime, stars: stars)
+
         HapticManager.shared.correctGuess()
         SoundManager.shared.correctGuess()
     }
