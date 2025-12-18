@@ -448,5 +448,6 @@ struct CellPosition: Hashable {
 enum BinaryGridState: Equatable {
     case playing
     case won(time: TimeInterval, stars: Int)
+    case lost
     case paused
 }
