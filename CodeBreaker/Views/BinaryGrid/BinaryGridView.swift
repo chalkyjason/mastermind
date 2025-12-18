@@ -95,6 +95,14 @@ struct BinaryGridView: View {
         .onChange(of: game.gameState) { _, newState in
             handleGameStateChange(newState)
         }
+        .onReceive(game.objectWillChange) { _ in
+            // Additional check for win state when object changes
+            DispatchQueue.main.async {
+                if case .won = game.gameState, !showingWinSheet {
+                    handleGameStateChange(game.gameState)
+                }
+            }
+        }
     }
 
     private var headerTitle: String {

@@ -12,6 +12,7 @@
 		D1000001 /* BinaryGridGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000001 /* BinaryGridGame.swift */; };
 		D1000002 /* BinaryGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000002 /* BinaryGridView.swift */; };
 		D1000003 /* BinaryGridLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000003 /* BinaryGridLevelSelectView.swift */; };
+		D1000004 /* GameModeSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000004 /* GameModeSelectView.swift */; };
 		7921ADE02EEB043D001B8143 /* LivesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADDF2EEB043D001B8143 /* LivesManager.swift */; };
 		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
 		7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE32EEB0500001B8143 /* AdManager.swift */; };
@@ -51,6 +52,7 @@
 		D2000001 /* BinaryGridGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridGame.swift; sourceTree = "<group>"; };
 		D2000002 /* BinaryGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridView.swift; sourceTree = "<group>"; };
 		D2000003 /* BinaryGridLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridLevelSelectView.swift; sourceTree = "<group>"; };
+		D2000004 /* GameModeSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModeSelectView.swift; sourceTree = "<group>"; };
 		799256762EE753F0006215AA /* Assets.xcassetsAppIcon.appiconsetContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsAppIcon.appiconsetContents.json; sourceTree = "<group>"; };
 		799256782EE753F4006215AA /* Assets.xcassetsContents.json */ = {isa = PBXFileReference; lastKnownFileType = text.json; path = Assets.xcassetsContents.json; sourceTree = "<group>"; };
 		79D5DE2C2EF08567004BCA5D /* CodeBreaker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CodeBreaker.entitlements; sourceTree = "<group>"; };
@@ -195,6 +197,7 @@
 				A2000012 /* SettingsView.swift */,
 				A2000013 /* HowToPlayView.swift */,
 				C2000003 /* BallSortLevelSelectView.swift */,
+				D2000004 /* GameModeSelectView.swift */,
 			);
 			path = Menu;
 			sourceTree = "<group>";
@@ -301,6 +304,7 @@
 				D1000001 /* BinaryGridGame.swift in Sources */,
 				D1000002 /* BinaryGridView.swift in Sources */,
 				D1000003 /* BinaryGridLevelSelectView.swift in Sources */,
+				D1000004 /* GameModeSelectView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
