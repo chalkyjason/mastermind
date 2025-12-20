@@ -147,6 +147,10 @@ class BallSortGame: ObservableObject {
         }
     }
 
+    func deselectTube() {
+        selectedTubeIndex = nil
+    }
+
     func canMove(from sourceIndex: Int, to destIndex: Int) -> Bool {
         guard sourceIndex != destIndex else { return false }
         guard sourceIndex >= 0 && sourceIndex < tubes.count else { return false }
