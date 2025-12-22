@@ -14,8 +14,7 @@ struct BallSortView: View {
     // Animation state for ball transfer
     @State private var animatingBallTransfer = false
     @State private var transferringBalls: [PegColor] = []
-    @State private var transferSourceFrame: CGRect = .zero
-    @State private var transferTargetFrame: CGRect = .zero
+    @State private var transferSourceIndex: Int? = nil
     @State private var ballPosition: CGPoint = .zero
     @State private var tubeFrames: [Int: CGRect] = [:]
 
@@ -54,7 +53,7 @@ struct BallSortView: View {
                     game: game,
                     tubeFrames: $tubeFrames,
                     animatingBallTransfer: animatingBallTransfer,
-                    transferSourceIndex: game.selectedTubeIndex,
+                    transferSourceIndex: transferSourceIndex,
                     onTubeTapped: handleTubeTapped
                 )
                 .padding(.horizontal, 16)
@@ -209,7 +208,9 @@ struct BallSortView: View {
         guard let sourceFrame = tubeFrames[sourceIndex],
               let targetFrame = tubeFrames[targetIndex] else {
             // Fallback: just do the move without animation
-            performMove(from: sourceIndex, to: targetIndex)
+            game.selectTube(at: targetIndex)
+            HapticManager.shared.pegPlaced()
+            SoundManager.shared.pegPlaced()
             return
         }
 
@@ -232,52 +233,51 @@ struct BallSortView: View {
         let ballsMoving = min(ballsToTransfer.count, spaceAvailable)
         transferringBalls = Array(repeating: topColor, count: ballsMoving)
 
-        // Calculate start and end positions
-        let startY = sourceFrame.minY - CGFloat(ballsMoving) * 20
-        let endY = targetFrame.minY - CGFloat(targetTube.count + ballsMoving) * 20
+        // Store source index for visual hiding during animation
+        transferSourceIndex = sourceIndex
+
+        // Calculate positions
+        let startY = sourceFrame.midY - 40
+        let endY = targetFrame.midY - CGFloat(targetTube.count) * 38
 
         ballPosition = CGPoint(x: sourceFrame.midX, y: startY)
-        transferSourceFrame = sourceFrame
-        transferTargetFrame = targetFrame
-
         animatingBallTransfer = true
         HapticManager.shared.impact(.light)
 
-        // Animate: first lift up, then move across, then drop down
-        let liftHeight: CGFloat = -60
+        // Fast animation: lift, arc across, drop (~0.25s total)
+        let liftHeight: CGFloat = -50
 
-        // Phase 1: Lift up
-        withAnimation(.easeOut(duration: 0.15)) {
+        // Phase 1: Lift up (0.08s)
+        withAnimation(.easeOut(duration: 0.08)) {
             ballPosition = CGPoint(x: sourceFrame.midX, y: sourceFrame.minY + liftHeight)
         }
 
-        // Phase 2: Move across (after lift)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
-            withAnimation(.easeInOut(duration: 0.2)) {
+        // Phase 2: Arc across (0.1s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.08) {
+            withAnimation(.easeInOut(duration: 0.1)) {
                 ballPosition = CGPoint(x: targetFrame.midX, y: targetFrame.minY + liftHeight)
             }
         }
 
-        // Phase 3: Drop down (after move across)
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-            withAnimation(.easeIn(duration: 0.15)) {
-                ballPosition = CGPoint(x: targetFrame.midX, y: endY + 60)
+        // Phase 3: Drop down (0.07s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.18) {
+            withAnimation(.easeIn(duration: 0.07)) {
+                ballPosition = CGPoint(x: targetFrame.midX, y: endY)
             }
         }
 
-        // Complete the move
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            performMove(from: sourceIndex, to: targetIndex)
+        // Complete the move (at 0.25s)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.25) {
+            // Perform the actual game move (source is already selected)
+            game.selectTube(at: targetIndex)
+            HapticManager.shared.pegPlaced()
+            SoundManager.shared.pegPlaced()
+
+            // Clear animation state
             animatingBallTransfer = false
             transferringBalls = []
+            transferSourceIndex = nil
         }
-    }
-
-    private func performMove(from sourceIndex: Int, to targetIndex: Int) {
-        game.selectTube(at: sourceIndex)
-        game.selectTube(at: targetIndex)
-        HapticManager.shared.pegPlaced()
-        SoundManager.shared.pegPlaced()
     }
 }
 
@@ -352,7 +352,7 @@ struct TubesGridView: View {
                             TappableTubeView(
                                 tubeIndex: tubeIndex,
                                 balls: displayBalls(for: tubeIndex),
-                                isSelected: game.selectedTubeIndex == tubeIndex,
+                                isSelected: isSelected(tubeIndex),
                                 isComplete: game.isTubeComplete(tubeIndex),
                                 colorblindMode: colorblindMode,
                                 onTap: { onTubeTapped(tubeIndex) }
@@ -374,6 +374,14 @@ struct TubesGridView: View {
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
+    }
+
+    private func isSelected(_ tubeIndex: Int) -> Bool {
+        // Don't show source as selected during animation
+        if animatingBallTransfer && transferSourceIndex == tubeIndex {
+            return false
+        }
+        return game.selectedTubeIndex == tubeIndex
     }
 
     private func displayBalls(for tubeIndex: Int) -> [PegColor] {
