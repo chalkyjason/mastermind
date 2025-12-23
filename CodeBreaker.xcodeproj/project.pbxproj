@@ -35,6 +35,9 @@
 		A1000013 /* HowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* HowToPlayView.swift */; };
 		A1000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000014 /* Assets.xcassets */; };
 		B1000001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B2000001 /* GoogleMobileAds */; };
+		E1000001 /* FlowConnectGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2000001 /* FlowConnectGame.swift */; };
+		E1000002 /* FlowConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2000002 /* FlowConnectView.swift */; };
+		E1000003 /* FlowConnectLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2000003 /* FlowConnectLevelSelectView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -67,6 +70,9 @@
 		A2000013 /* HowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlayView.swift; sourceTree = "<group>"; };
 		A2000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A3000001 /* CodeBreaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodeBreaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		E2000001 /* FlowConnectGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowConnectGame.swift; sourceTree = "<group>"; };
+		E2000002 /* FlowConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowConnectView.swift; sourceTree = "<group>"; };
+		E2000003 /* FlowConnectLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowConnectLevelSelectView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -118,6 +124,7 @@
 				A2000004 /* MastermindGame.swift */,
 				C2000001 /* BallSortGame.swift */,
 				D2000001 /* BinaryGridGame.swift */,
+				E2000001 /* FlowConnectGame.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -137,6 +144,7 @@
 				A5000009 /* Game */,
 				A5000010 /* Menu */,
 				D5000001 /* BinaryGrid */,
+				E5000001 /* FlowConnect */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -148,6 +156,15 @@
 				D2000003 /* BinaryGridLevelSelectView.swift */,
 			);
 			path = BinaryGrid;
+			sourceTree = "<group>";
+		};
+		E5000001 /* FlowConnect */ = {
+			isa = PBXGroup;
+			children = (
+				E2000002 /* FlowConnectView.swift */,
+				E2000003 /* FlowConnectLevelSelectView.swift */,
+			);
+			path = FlowConnect;
 			sourceTree = "<group>";
 		};
 		A5000007 /* Services */ = {
@@ -297,6 +314,9 @@
 				D1000002 /* BinaryGridView.swift in Sources */,
 				D1000003 /* BinaryGridLevelSelectView.swift in Sources */,
 				D1000004 /* GameModeSelectView.swift in Sources */,
+				E1000001 /* FlowConnectGame.swift in Sources */,
+				E1000002 /* FlowConnectView.swift in Sources */,
+				E1000003 /* FlowConnectLevelSelectView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

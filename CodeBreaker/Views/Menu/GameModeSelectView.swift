@@ -7,6 +7,7 @@ struct GameModeSelectView: View {
     @State private var showingCodeBreaker = false
     @State private var showingBallSort = false
     @State private var showingBinaryGrid = false
+    @State private var showingFlowConnect = false
     @State private var showingDailyChallenge = false
     @State private var showingTimeAttack = false
 
@@ -84,6 +85,17 @@ struct GameModeSelectView: View {
                             showingBinaryGrid = true
                         }
 
+                        GameModeCard(
+                            title: "Flow Connect",
+                            subtitle: "Connect matching colors",
+                            icon: "point.topleft.down.to.point.bottomright.curvepath.fill",
+                            color: Color("AccentOrange"),
+                            stats: "\(gameManager.flowConnectLevelsCompleted) levels · \(gameManager.flowConnectTotalStars) ⭐"
+                        ) {
+                            SoundManager.shared.buttonTap()
+                            showingFlowConnect = true
+                        }
+
                         // Challenge Modes Section
                         SectionHeader(title: "Challenges", icon: "flame.fill")
                             .padding(.top, 8)
@@ -125,6 +137,9 @@ struct GameModeSelectView: View {
         }
         .navigationDestination(isPresented: $showingBinaryGrid) {
             BinaryGridLevelSelectView()
+        }
+        .navigationDestination(isPresented: $showingFlowConnect) {
+            FlowConnectLevelSelectView()
         }
         .navigationDestination(isPresented: $showingDailyChallenge) {
             DailyChallengeView()

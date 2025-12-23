@@ -23,6 +23,11 @@ class GameManager: ObservableObject {
     @Published var binaryGridTotalStars: Int = 0
     @Published var binaryGridLevelsCompleted: Int = 0
 
+    // Flow Connect
+    @Published var flowConnectLevels: [FlowConnectLevel] = []
+    @Published var flowConnectTotalStars: Int = 0
+    @Published var flowConnectLevelsCompleted: Int = 0
+
     // Hints
     @Published var hintsUsedToday: Int = 0
     static let maxDailyHints = 3
@@ -38,6 +43,7 @@ class GameManager: ObservableObject {
         static let dailyChallenges = "completedDailyChallenges"
         static let ballSortLevels = "ballSortLevels"
         static let binaryGridLevels = "binaryGridLevels"
+        static let flowConnectLevels = "flowConnectLevels"
         static let hintsUsedToday = "hintsUsedToday"
         static let lastHintDate = "lastHintDate"
     }
@@ -64,6 +70,7 @@ class GameManager: ObservableObject {
         generateLevels()
         generateBallSortLevels()
         generateBinaryGridLevels()
+        generateFlowConnectLevels()
         checkDailyChallenge()
         updateStreak()
         checkHintReset()
@@ -422,6 +429,109 @@ class GameManager: ObservableObject {
         binaryGridLevelsCompleted = binaryGridLevels.filter { $0.stars > 0 }.count
     }
 
+    // MARK: - Flow Connect Level Generation
+
+    private func generateFlowConnectLevels() {
+        guard flowConnectLevels.isEmpty else {
+            calculateFlowConnectStats()
+            return
+        }
+
+        var allLevels: [FlowConnectLevel] = []
+        var levelId = 0
+
+        for difficulty in FlowConnectDifficulty.allCases {
+            for levelNum in 1...difficulty.levelsCount {
+                let isUnlocked = difficulty == .tiny && levelNum == 1
+                let level = FlowConnectLevel(
+                    id: levelId,
+                    difficulty: difficulty,
+                    levelInDifficulty: levelNum,
+                    isUnlocked: isUnlocked
+                )
+                allLevels.append(level)
+                levelId += 1
+            }
+        }
+
+        flowConnectLevels = allLevels
+        saveData()
+        calculateFlowConnectStats()
+    }
+
+    // MARK: - Flow Connect Level Progression
+
+    func flowConnectLevels(for difficulty: FlowConnectDifficulty) -> [FlowConnectLevel] {
+        flowConnectLevels.filter { $0.difficulty == difficulty }
+    }
+
+    func completeFlowConnectLevel(_ levelId: Int, stars: Int, moves: Int) {
+        guard let index = flowConnectLevels.firstIndex(where: { $0.id == levelId }) else { return }
+
+        let previousStars = flowConnectLevels[index].stars
+
+        // Update stars if better
+        if stars > flowConnectLevels[index].stars {
+            flowConnectLevels[index].stars = stars
+        }
+
+        // Update best moves if better
+        if let bestMoves = flowConnectLevels[index].bestMoves {
+            if moves < bestMoves {
+                flowConnectLevels[index].bestMoves = moves
+            }
+        } else {
+            flowConnectLevels[index].bestMoves = moves
+        }
+
+        // Unlock next level
+        if index + 1 < flowConnectLevels.count && !flowConnectLevels[index + 1].isUnlocked {
+            flowConnectLevels[index + 1].isUnlocked = true
+
+            let currentDifficulty = flowConnectLevels[index].difficulty
+            let nextDifficulty = flowConnectLevels[index + 1].difficulty
+            if currentDifficulty != nextDifficulty {
+                HapticManager.shared.tierUnlocked()
+            } else {
+                HapticManager.shared.levelUnlocked()
+            }
+        }
+
+        // Update streak
+        updateStreakOnWin()
+
+        // Recalculate stats
+        calculateFlowConnectStats()
+
+        // Save progress
+        saveData()
+
+        // Notify notification manager
+        NotificationManager.shared.userDidPlay()
+
+        // Report to Game Center
+        if stars > previousStars {
+            GameCenterManager.shared.reportFlowConnectCompletion(levelId: levelId, stars: stars)
+        }
+    }
+
+    func isFlowConnectDifficultyUnlocked(_ difficulty: FlowConnectDifficulty) -> Bool {
+        flowConnectLevels.first(where: { $0.difficulty == difficulty })?.isUnlocked ?? false
+    }
+
+    func flowConnectDifficultyProgress(_ difficulty: FlowConnectDifficulty) -> (completed: Int, total: Int, stars: Int, maxStars: Int) {
+        let difficultyLevels = flowConnectLevels(for: difficulty)
+        let completed = difficultyLevels.filter { $0.stars > 0 }.count
+        let stars = difficultyLevels.reduce(0) { $0 + $1.stars }
+        let maxStars = difficultyLevels.count * 3
+        return (completed, difficultyLevels.count, stars, maxStars)
+    }
+
+    private func calculateFlowConnectStats() {
+        flowConnectTotalStars = flowConnectLevels.reduce(0) { $0 + $1.stars }
+        flowConnectLevelsCompleted = flowConnectLevels.filter { $0.stars > 0 }.count
+    }
+
     // MARK: - Hint Management
 
     /// Checks if hints should be reset (new day)
@@ -543,6 +653,11 @@ class GameManager: ObservableObject {
             defaults.set(encoded, forKey: Keys.binaryGridLevels)
         }
 
+        // Save Flow Connect levels
+        if let encoded = try? JSONEncoder().encode(flowConnectLevels) {
+            defaults.set(encoded, forKey: Keys.flowConnectLevels)
+        }
+
         // Sync to widget
         syncToWidget()
     }
@@ -592,6 +707,12 @@ class GameManager: ObservableObject {
             binaryGridLevels = decoded
         }
 
+        // Load Flow Connect levels
+        if let data = defaults.data(forKey: Keys.flowConnectLevels),
+           let decoded = try? JSONDecoder().decode([FlowConnectLevel].self, from: data) {
+            flowConnectLevels = decoded
+        }
+
         // Load hints
         hintsUsedToday = defaults.integer(forKey: Keys.hintsUsedToday)
     }
@@ -616,6 +737,11 @@ class GameManager: ObservableObject {
         binaryGridTotalStars = 0
         binaryGridLevelsCompleted = 0
 
+        // Reset Flow Connect
+        flowConnectLevels = []
+        flowConnectTotalStars = 0
+        flowConnectLevelsCompleted = 0
+
         // Reset hints
         hintsUsedToday = 0
 
@@ -626,12 +752,14 @@ class GameManager: ObservableObject {
         defaults.removeObject(forKey: Keys.dailyChallenges)
         defaults.removeObject(forKey: Keys.ballSortLevels)
         defaults.removeObject(forKey: Keys.binaryGridLevels)
+        defaults.removeObject(forKey: Keys.flowConnectLevels)
         defaults.removeObject(forKey: Keys.hintsUsedToday)
         defaults.removeObject(forKey: Keys.lastHintDate)
 
         generateLevels()
         generateBallSortLevels()
         generateBinaryGridLevels()
+        generateFlowConnectLevels()
         checkDailyChallenge()
     }
 }
