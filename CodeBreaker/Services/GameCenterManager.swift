@@ -168,6 +168,13 @@ class GameCenterManager: ObservableObject {
         #endif
     }
 
+    func reportFlowConnectCompletion(levelId: Int, stars: Int) {
+        // Report Flow Connect level completion
+        #if DEBUG
+        print("Flow Connect level \(levelId) completed with \(stars) stars")
+        #endif
+    }
+
     // MARK: - Achievements
     
     func unlockAchievement(_ achievement: AchievementID, percentComplete: Double = 100.0) {

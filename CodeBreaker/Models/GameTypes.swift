@@ -523,3 +523,111 @@ struct BinaryGridLevel: Identifiable, Codable {
         }
     }
 }
+
+// MARK: - Flow Connect Difficulty
+
+enum FlowConnectDifficulty: Int, CaseIterable, Codable {
+    case tiny = 0      // 5x5
+    case small = 1     // 6x6
+    case medium = 2    // 7x7
+    case large = 3     // 8x8
+    case huge = 4      // 9x9
+
+    var name: String {
+        switch self {
+        case .tiny: return "Tiny"
+        case .small: return "Small"
+        case .medium: return "Medium"
+        case .large: return "Large"
+        case .huge: return "Huge"
+        }
+    }
+
+    var gridSize: Int {
+        switch self {
+        case .tiny: return 5
+        case .small: return 6
+        case .medium: return 7
+        case .large: return 8
+        case .huge: return 9
+        }
+    }
+
+    var flowCount: Int {
+        switch self {
+        case .tiny: return 4
+        case .small: return 5
+        case .medium: return 6
+        case .large: return 7
+        case .huge: return 8
+        }
+    }
+
+    var minPathLength: Int {
+        switch self {
+        case .tiny: return 3
+        case .small: return 3
+        case .medium: return 4
+        case .large: return 4
+        case .huge: return 5
+        }
+    }
+
+    var levelsCount: Int {
+        switch self {
+        case .tiny: return 20
+        case .small: return 30
+        case .medium: return 40
+        case .large: return 50
+        case .huge: return 60
+        }
+    }
+
+    var iconName: String {
+        switch self {
+        case .tiny: return "point.topleft.down.to.point.bottomright.curvepath.fill"
+        case .small: return "point.topleft.down.to.point.bottomright.curvepath.fill"
+        case .medium: return "point.topleft.down.to.point.bottomright.curvepath.fill"
+        case .large: return "point.topleft.down.to.point.bottomright.curvepath.fill"
+        case .huge: return "point.topleft.down.to.point.bottomright.curvepath.fill"
+        }
+    }
+
+    var color: Color {
+        switch self {
+        case .tiny: return .green
+        case .small: return .blue
+        case .medium: return .orange
+        case .large: return .purple
+        case .huge: return Color("AccentGold")
+        }
+    }
+}
+
+// MARK: - Flow Connect Level
+
+struct FlowConnectLevel: Identifiable, Codable {
+    let id: Int
+    let difficulty: FlowConnectDifficulty
+    let levelInDifficulty: Int
+    var stars: Int = 0
+    var isUnlocked: Bool = false
+    var bestMoves: Int?
+
+    var displayName: String {
+        "\(difficulty.name) \(levelInDifficulty)"
+    }
+
+    /// Calculate stars based on moves used
+    static func calculateStars(moves: Int, flowCount: Int) -> Int {
+        let targetMoves = flowCount * 2
+        let ratio = Double(moves) / Double(targetMoves)
+        if ratio <= 1.0 {
+            return 3
+        } else if ratio <= 1.5 {
+            return 2
+        } else {
+            return 1
+        }
+    }
+}
