@@ -1085,9 +1085,9 @@ struct FlowConnectDemoView: View {
                 VStack(spacing: 4) {
                     MiniFlowGridView(
                         cells: [
-                            [.endpoint(.red), .path(.blue), .endpoint(.blue)],
-                            [.path(.red), .empty, .empty],
-                            [.endpoint(.red), .empty, .endpoint(.blue)]
+                            [.endpoint(.red), .path(.red), .endpoint(.red)],
+                            [.endpoint(.blue), .path(.blue), .empty],
+                            [.empty, .empty, .endpoint(.blue)]
                         ],
                         paths: [],
                         showError: true
