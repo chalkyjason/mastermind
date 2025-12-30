@@ -6,7 +6,6 @@ struct FlowConnectView: View {
     @Environment(\.dismiss) private var dismiss
 
     @State private var showingWinSheet = false
-    @State private var cellFrames: [GridPosition: CGRect] = [:]
 
     let level: FlowConnectLevel?
 
@@ -41,11 +40,8 @@ struct FlowConnectView: View {
                 Spacer()
 
                 // Grid
-                FlowConnectGridView(
-                    game: game,
-                    cellFrames: $cellFrames
-                )
-                .padding(.horizontal)
+                FlowConnectGridView(game: game)
+                    .padding(.horizontal)
 
                 Spacer()
 
@@ -186,13 +182,13 @@ struct FlowConnectHeaderView: View {
 
 struct FlowConnectGridView: View {
     @ObservedObject var game: FlowConnectGame
-    @Binding var cellFrames: [GridPosition: CGRect]
 
     @State private var lastProcessedPosition: GridPosition?
+    @State private var gridOrigin: CGPoint = .zero
 
     var body: some View {
         let cellSize = calculateCellSize()
-        let spacing: CGFloat = 2
+        let spacing: CGFloat = 3
 
         GeometryReader { geometry in
             let gridWidth = CGFloat(game.gridSize) * cellSize + CGFloat(game.gridSize - 1) * spacing
@@ -204,36 +200,63 @@ struct FlowConnectGridView: View {
                     .fill(Color.black.opacity(0.4))
                     .frame(width: gridWidth + 16, height: gridHeight + 16)
 
-                // Cells
+                // Cells grid
                 VStack(spacing: spacing) {
                     ForEach(0..<game.gridSize, id: \.self) { row in
                         HStack(spacing: spacing) {
                             ForEach(0..<game.gridSize, id: \.self) { col in
                                 let pos = GridPosition(row: row, col: col)
+                                let isActive = isEndpointActive(pos)
+
                                 FlowCellView(
                                     cell: game.grid[row][col],
                                     isInCurrentPath: game.currentPath.contains(pos),
+                                    isActiveEndpoint: isActive,
                                     currentColor: game.currentDrawingColor,
                                     size: cellSize
-                                )
-                                .background(
-                                    GeometryReader { cellGeo in
-                                        Color.clear.onAppear {
-                                            cellFrames[pos] = cellGeo.frame(in: .named("flowGrid"))
-                                        }
-                                    }
                                 )
                             }
                         }
                     }
                 }
+                .background(
+                    GeometryReader { gridGeo in
+                        Color.clear.preference(
+                            key: GridOriginPreferenceKey.self,
+                            value: gridGeo.frame(in: .local).origin
+                        )
+                    }
+                )
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
-            .coordinateSpace(name: "flowGrid")
+            .contentShape(Rectangle())
             .gesture(
-                DragGesture(minimumDistance: 0, coordinateSpace: .named("flowGrid"))
+                DragGesture(minimumDistance: 0)
                     .onChanged { value in
-                        handleDrag(at: value.location, cellSize: cellSize, spacing: spacing)
+                        let cellStep = cellSize + spacing
+                        // Calculate grid origin (centered in geometry)
+                        let totalGridWidth = CGFloat(game.gridSize) * cellStep - spacing
+                        let totalGridHeight = CGFloat(game.gridSize) * cellStep - spacing
+                        let originX = (geometry.size.width - totalGridWidth) / 2
+                        let originY = (geometry.size.height - totalGridHeight) / 2
+
+                        // Convert touch to grid coordinates
+                        let localX = value.location.x - originX
+                        let localY = value.location.y - originY
+
+                        let col = Int(localX / cellStep)
+                        let row = Int(localY / cellStep)
+
+                        // Bounds check
+                        guard row >= 0 && row < game.gridSize && col >= 0 && col < game.gridSize else {
+                            return
+                        }
+
+                        let position = GridPosition(row: row, col: col)
+                        if lastProcessedPosition != position {
+                            lastProcessedPosition = position
+                            processTouch(at: position)
+                        }
                     }
                     .onEnded { _ in
                         handleDragEnd()
@@ -242,26 +265,19 @@ struct FlowConnectGridView: View {
         }
     }
 
+    private func isEndpointActive(_ position: GridPosition) -> Bool {
+        guard let currentColor = game.currentDrawingColor else { return false }
+        let cell = game.grid[position.row][position.col]
+        // Highlight matching endpoint when drawing
+        return cell.type == .endpoint && cell.color == currentColor
+    }
+
     private func calculateCellSize() -> CGFloat {
         let screenWidth = UIScreen.main.bounds.width
         let padding: CGFloat = 64
-        let totalSpacing = CGFloat(game.gridSize - 1) * 2
+        let totalSpacing = CGFloat(game.gridSize - 1) * 3
         let availableWidth = screenWidth - padding - totalSpacing
         return min(availableWidth / CGFloat(game.gridSize), 50)
-    }
-
-    private func handleDrag(at location: CGPoint, cellSize: CGFloat, spacing: CGFloat) {
-        // Find which cell was touched
-        for (position, frame) in cellFrames {
-            if frame.contains(location) {
-                // Only process if it's a new cell
-                if lastProcessedPosition != position {
-                    lastProcessedPosition = position
-                    processTouch(at: position)
-                }
-                return
-            }
-        }
     }
 
     private func processTouch(at position: GridPosition) {
@@ -288,7 +304,6 @@ struct FlowConnectGridView: View {
                 // Backtracked
                 HapticManager.shared.impact(.soft)
             }
-            // If path count unchanged, move was invalid (no feedback needed)
         }
     }
 
@@ -306,10 +321,14 @@ struct FlowConnectGridView: View {
         if wasConnected {
             HapticManager.shared.notification(.success)
             SoundManager.shared.correctGuess()
-        } else if game.currentPath.isEmpty == false {
-            // Path was incomplete
-            HapticManager.shared.notification(.error)
         }
+    }
+}
+
+struct GridOriginPreferenceKey: PreferenceKey {
+    static var defaultValue: CGPoint = .zero
+    static func reduce(value: inout CGPoint, nextValue: () -> CGPoint) {
+        value = nextValue()
     }
 }
 
@@ -318,6 +337,7 @@ struct FlowConnectGridView: View {
 struct FlowCellView: View {
     let cell: FlowCell
     let isInCurrentPath: Bool
+    let isActiveEndpoint: Bool
     let currentColor: FlowColor?
     let size: CGFloat
 
@@ -330,43 +350,55 @@ struct FlowCellView: View {
 
             // Endpoint dot
             if cell.type == .endpoint, let color = cell.color {
-                Circle()
-                    .fill(
-                        RadialGradient(
-                            gradient: Gradient(colors: [
-                                color.color.opacity(0.9),
-                                color.color
-                            ]),
-                            center: .topLeading,
-                            startRadius: 0,
-                            endRadius: size * 0.5
-                        )
-                    )
-                    .frame(width: size * 0.7, height: size * 0.7)
-                    .shadow(color: color.color.opacity(0.6), radius: 4, y: 2)
-                    .overlay(
+                ZStack {
+                    // Glow effect when active
+                    if isActiveEndpoint || isInCurrentPath {
                         Circle()
-                            .stroke(Color.white.opacity(0.3), lineWidth: 2)
-                            .frame(width: size * 0.7, height: size * 0.7)
-                    )
+                            .fill(color.color.opacity(0.4))
+                            .frame(width: size * 0.9, height: size * 0.9)
+                            .blur(radius: 4)
+                    }
+
+                    Circle()
+                        .fill(
+                            RadialGradient(
+                                gradient: Gradient(colors: [
+                                    color.color.opacity(0.95),
+                                    color.color
+                                ]),
+                                center: .topLeading,
+                                startRadius: 0,
+                                endRadius: size * 0.5
+                            )
+                        )
+                        .frame(width: size * 0.7, height: size * 0.7)
+                        .shadow(color: color.color.opacity(0.6), radius: isActiveEndpoint ? 8 : 4, y: 2)
+                        .overlay(
+                            Circle()
+                                .stroke(Color.white.opacity(isActiveEndpoint ? 0.6 : 0.3), lineWidth: isActiveEndpoint ? 3 : 2)
+                                .frame(width: size * 0.7, height: size * 0.7)
+                        )
+                        .scaleEffect(isActiveEndpoint ? 1.1 : 1.0)
+                        .animation(.easeInOut(duration: 0.15), value: isActiveEndpoint)
+                }
             }
 
             // Committed path segment
             if cell.type == .path, let color = cell.color {
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
-                    .fill(color.color.opacity(0.8))
-                    .frame(width: size * 0.55, height: size * 0.55)
+                    .fill(color.color.opacity(0.85))
+                    .frame(width: size * 0.6, height: size * 0.6)
             }
 
             // Current drawing path (preview)
-            if isInCurrentPath, let color = currentColor {
+            if isInCurrentPath && cell.type != .endpoint, let color = currentColor {
                 RoundedRectangle(cornerRadius: 4, style: .continuous)
                     .fill(color.color.opacity(0.6))
-                    .frame(width: size * 0.55, height: size * 0.55)
+                    .frame(width: size * 0.6, height: size * 0.6)
                     .overlay(
                         RoundedRectangle(cornerRadius: 4, style: .continuous)
                             .stroke(color.color, lineWidth: 2)
-                            .frame(width: size * 0.55, height: size * 0.55)
+                            .frame(width: size * 0.6, height: size * 0.6)
                     )
             }
         }
@@ -377,6 +409,8 @@ struct FlowCellView: View {
             return Color.white.opacity(0.2)
         } else if cell.type == .path {
             return Color.white.opacity(0.1)
+        } else if isActiveEndpoint {
+            return Color.white.opacity(0.15)
         }
         return Color.white.opacity(0.08)
     }
