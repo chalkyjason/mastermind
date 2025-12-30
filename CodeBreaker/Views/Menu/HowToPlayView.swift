@@ -1069,7 +1069,7 @@ struct FlowConnectDemoView: View {
                     MiniFlowGridView(
                         cells: [
                             [.endpoint(.red), .path(.red), .endpoint(.red)],
-                            [.endpoint(.blue), .empty, .empty],
+                            [.endpoint(.blue), .path(.blue), .path(.blue)],
                             [.empty, .empty, .endpoint(.blue)]
                         ],
                         paths: []
@@ -1183,12 +1183,10 @@ enum FlowDemoCellType {
 // MARK: - Mini Flow Grid View
 
 struct MiniFlowGridView: View {
-    let cells: [[FlowDemoCellType]]
-    let paths: [([(Int, Int)], FlowColor)]
+    let cells: [[FlowCellType]]
     var isComplete: Bool = false
     var showError: Bool = false
     var highlightedPath: [(Int, Int)]? = nil
-    var highlightColor: FlowColor? = nil
 
     private let cellSize: CGFloat = 24
     private let spacing: CGFloat = 2
