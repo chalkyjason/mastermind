@@ -1184,11 +1184,9 @@ enum FlowCellType {
 
 struct MiniFlowGridView: View {
     let cells: [[FlowCellType]]
-    let paths: [([(Int, Int)], FlowColor)]
     var isComplete: Bool = false
     var showError: Bool = false
     var highlightedPath: [(Int, Int)]? = nil
-    var highlightColor: FlowColor? = nil
 
     private let cellSize: CGFloat = 24
     private let spacing: CGFloat = 2
