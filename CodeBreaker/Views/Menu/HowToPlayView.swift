@@ -6,12 +6,14 @@ enum GameMode: String, CaseIterable {
     case codeBreaker = "Code Breaker"
     case ballSort = "Ball Sort"
     case binaryGrid = "Binary Grid"
+    case flowConnect = "Flow Connect"
 
     var icon: String {
         switch self {
         case .codeBreaker: return "lock.shield"
         case .ballSort: return "testtube.2"
         case .binaryGrid: return "square.grid.3x3.fill"
+        case .flowConnect: return "point.topleft.down.to.point.bottomright.curvepath"
         }
     }
 }
@@ -132,11 +134,45 @@ struct HowToPlayView: View {
         )
     ]
 
+    let flowConnectPages: [TutorialPage] = [
+        TutorialPage(
+            title: "Connect the Flows",
+            description: "Your goal is to connect matching colored endpoints with paths. Each pair of dots must be linked!",
+            imageName: "point.topleft.down.to.point.bottomright.curvepath",
+            flowConnectDemo: .goal
+        ),
+        TutorialPage(
+            title: "Draw Paths",
+            description: "Drag from one endpoint to draw a path. The path follows the grid cells until you reach the matching endpoint.",
+            imageName: "hand.draw",
+            flowConnectDemo: .draw
+        ),
+        TutorialPage(
+            title: "No Crossing",
+            description: "Paths cannot cross each other. Plan your routes carefully to avoid blocking other connections.",
+            imageName: "xmark.circle",
+            flowConnectDemo: .noCrossing
+        ),
+        TutorialPage(
+            title: "Fill the Grid",
+            description: "A complete solution uses every cell on the grid. Empty spaces mean you need to reroute!",
+            imageName: "square.grid.3x3.fill",
+            flowConnectDemo: .fillGrid
+        ),
+        TutorialPage(
+            title: "Connect All Pairs",
+            description: "Connect all colored pairs to win. Fewer moves and faster times earn more stars!",
+            imageName: "star.fill",
+            flowConnectDemo: .win
+        )
+    ]
+
     var currentPages: [TutorialPage] {
         switch selectedMode {
         case .codeBreaker: return codeBreakerPages
         case .ballSort: return ballSortPages
         case .binaryGrid: return binaryGridPages
+        case .flowConnect: return flowConnectPages
         }
     }
 
@@ -285,6 +321,16 @@ enum BinaryGridDemoType {
     case win
 }
 
+// MARK: - Flow Connect Demo Type
+
+enum FlowConnectDemoType {
+    case goal
+    case draw
+    case noCrossing
+    case fillGrid
+    case win
+}
+
 // MARK: - Tutorial Page Model
 
 struct TutorialPage {
@@ -295,6 +341,7 @@ struct TutorialPage {
     var feedbackDemo: FeedbackPeg? = nil
     var ballSortDemo: BallSortDemoType? = nil
     var binaryGridDemo: BinaryGridDemoType? = nil
+    var flowConnectDemo: FlowConnectDemoType? = nil
 }
 
 // MARK: - Tutorial Page View
@@ -372,6 +419,12 @@ struct TutorialPageView: View {
             // Binary Grid demo if applicable
             if let binaryGridDemo = page.binaryGridDemo {
                 BinaryGridDemoView(demoType: binaryGridDemo)
+                    .padding(.top, 16)
+            }
+
+            // Flow Connect demo if applicable
+            if let flowConnectDemo = page.flowConnectDemo {
+                FlowConnectDemoView(demoType: flowConnectDemo)
                     .padding(.top, 16)
             }
 
@@ -916,6 +969,306 @@ struct MiniCellView: View {
             RoundedRectangle(cornerRadius: 4, style: .continuous)
                 .stroke(isError ? Color.red : Color.white.opacity(0.2), lineWidth: isError ? 1.5 : 0.5)
         )
+    }
+}
+
+// MARK: - Flow Connect Demo View
+
+struct FlowConnectDemoView: View {
+    let demoType: FlowConnectDemoType
+
+    var body: some View {
+        VStack(spacing: 12) {
+            switch demoType {
+            case .goal:
+                goalDemo
+            case .draw:
+                drawDemo
+            case .noCrossing:
+                noCrossingDemo
+            case .fillGrid:
+                fillGridDemo
+            case .win:
+                winDemo
+            }
+        }
+        .padding()
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+    }
+
+    // MARK: - Goal Demo
+
+    private var goalDemo: some View {
+        HStack(spacing: 16) {
+            // Unconnected grid
+            MiniFlowGridView(
+                cells: [
+                    [.endpoint(.red), .empty, .empty],
+                    [.empty, .endpoint(.blue), .empty],
+                    [.endpoint(.red), .empty, .endpoint(.blue)]
+                ],
+                paths: []
+            )
+
+            Image(systemName: "arrow.right")
+                .foregroundColor(.white.opacity(0.5))
+                .font(.title3)
+
+            // Connected grid
+            MiniFlowGridView(
+                cells: [
+                    [.endpoint(.red), .path(.red), .path(.red)],
+                    [.empty, .endpoint(.blue), .path(.red)],
+                    [.endpoint(.red), .path(.blue), .endpoint(.blue)]
+                ],
+                paths: [
+                    ([(0, 0), (0, 1), (0, 2), (1, 2), (2, 0)], FlowColor.red),
+                    ([(1, 1), (2, 1), (2, 2)], FlowColor.blue)
+                ],
+                isComplete: true
+            )
+        }
+    }
+
+    // MARK: - Draw Demo
+
+    private var drawDemo: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 4) {
+                MiniFlowGridView(
+                    cells: [
+                        [.endpoint(.red), .empty, .empty],
+                        [.empty, .empty, .empty],
+                        [.empty, .empty, .endpoint(.red)]
+                    ],
+                    paths: [],
+                    highlightedPath: [(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)],
+                    highlightColor: .red
+                )
+            }
+
+            VStack(spacing: 4) {
+                Image(systemName: "hand.draw.fill")
+                    .foregroundColor(Color("AccentGreen"))
+                    .font(.title2)
+                Text("Drag to\nconnect")
+                    .font(.caption2)
+                    .foregroundColor(.white.opacity(0.7))
+                    .multilineTextAlignment(.center)
+            }
+        }
+    }
+
+    // MARK: - No Crossing Demo
+
+    private var noCrossingDemo: some View {
+        VStack(spacing: 8) {
+            HStack(spacing: 20) {
+                VStack(spacing: 4) {
+                    MiniFlowGridView(
+                        cells: [
+                            [.endpoint(.red), .path(.red), .endpoint(.red)],
+                            [.endpoint(.blue), .empty, .empty],
+                            [.empty, .empty, .endpoint(.blue)]
+                        ],
+                        paths: []
+                    )
+                    Image(systemName: "checkmark.circle.fill")
+                        .foregroundColor(Color("AccentGreen"))
+                        .font(.caption)
+                    Text("Paths clear")
+                        .font(.caption2)
+                        .foregroundColor(Color("AccentGreen"))
+                }
+
+                VStack(spacing: 4) {
+                    MiniFlowGridView(
+                        cells: [
+                            [.endpoint(.red), .path(.blue), .endpoint(.blue)],
+                            [.path(.red), .empty, .empty],
+                            [.endpoint(.red), .empty, .endpoint(.blue)]
+                        ],
+                        paths: [],
+                        showError: true
+                    )
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.red)
+                        .font(.caption)
+                    Text("Blocked!")
+                        .font(.caption2)
+                        .foregroundColor(.red)
+                }
+            }
+        }
+    }
+
+    // MARK: - Fill Grid Demo
+
+    private var fillGridDemo: some View {
+        HStack(spacing: 16) {
+            VStack(spacing: 4) {
+                MiniFlowGridView(
+                    cells: [
+                        [.endpoint(.red), .path(.red), .endpoint(.red)],
+                        [.endpoint(.blue), .empty, .empty],
+                        [.path(.blue), .path(.blue), .endpoint(.blue)]
+                    ],
+                    paths: [],
+                    showError: true
+                )
+                Text("Gaps!")
+                    .font(.caption2)
+                    .foregroundColor(.red)
+            }
+
+            Image(systemName: "arrow.right")
+                .foregroundColor(.white.opacity(0.5))
+
+            VStack(spacing: 4) {
+                MiniFlowGridView(
+                    cells: [
+                        [.endpoint(.red), .path(.red), .endpoint(.red)],
+                        [.endpoint(.blue), .path(.red), .path(.red)],
+                        [.path(.blue), .path(.blue), .endpoint(.blue)]
+                    ],
+                    paths: [],
+                    isComplete: true
+                )
+                Text("Full!")
+                    .font(.caption2)
+                    .foregroundColor(Color("AccentGreen"))
+            }
+        }
+    }
+
+    // MARK: - Win Demo
+
+    private var winDemo: some View {
+        HStack(spacing: 12) {
+            MiniFlowGridView(
+                cells: [
+                    [.endpoint(.red), .path(.red), .path(.red)],
+                    [.path(.green), .path(.red), .endpoint(.red)],
+                    [.endpoint(.green), .path(.green), .endpoint(.blue)]
+                ],
+                paths: [],
+                isComplete: true
+            )
+
+            VStack(spacing: 2) {
+                HStack(spacing: 2) {
+                    ForEach(0..<3, id: \.self) { _ in
+                        Image(systemName: "star.fill")
+                            .font(.caption)
+                            .foregroundColor(Color("AccentYellow"))
+                    }
+                }
+                Text("Connected!")
+                    .font(.caption.weight(.bold))
+                    .foregroundColor(Color("AccentYellow"))
+            }
+        }
+    }
+}
+
+// MARK: - Flow Cell Type (for demos)
+
+enum FlowCellType {
+    case empty
+    case endpoint(FlowColor)
+    case path(FlowColor)
+}
+
+// MARK: - Mini Flow Grid View
+
+struct MiniFlowGridView: View {
+    let cells: [[FlowCellType]]
+    let paths: [([(Int, Int)], FlowColor)]
+    var isComplete: Bool = false
+    var showError: Bool = false
+    var highlightedPath: [(Int, Int)]? = nil
+    var highlightColor: FlowColor? = nil
+
+    private let cellSize: CGFloat = 24
+    private let spacing: CGFloat = 2
+
+    var body: some View {
+        VStack(spacing: spacing) {
+            ForEach(0..<cells.count, id: \.self) { row in
+                HStack(spacing: spacing) {
+                    ForEach(0..<cells[row].count, id: \.self) { col in
+                        MiniFlowCellView(
+                            cellType: cells[row][col],
+                            size: cellSize,
+                            isHighlighted: isInHighlightedPath(row: row, col: col)
+                        )
+                    }
+                }
+            }
+        }
+        .padding(4)
+        .background(Color.white.opacity(0.1))
+        .clipShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 6, style: .continuous)
+                .stroke(
+                    isComplete ? Color("AccentGreen") :
+                    (showError ? Color.red : Color.clear),
+                    lineWidth: 2
+                )
+        )
+    }
+
+    private func isInHighlightedPath(row: Int, col: Int) -> Bool {
+        guard let path = highlightedPath else { return false }
+        return path.contains { $0.0 == row && $0.1 == col }
+    }
+}
+
+// MARK: - Mini Flow Cell View
+
+struct MiniFlowCellView: View {
+    let cellType: FlowCellType
+    let size: CGFloat
+    var isHighlighted: Bool = false
+
+    var body: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .fill(backgroundColor)
+                .frame(width: size, height: size)
+
+            switch cellType {
+            case .empty:
+                EmptyView()
+            case .endpoint(let color):
+                Circle()
+                    .fill(color.color)
+                    .frame(width: size * 0.7, height: size * 0.7)
+                    .overlay(
+                        Circle()
+                            .stroke(Color.white.opacity(0.5), lineWidth: 1)
+                    )
+            case .path(let color):
+                RoundedRectangle(cornerRadius: 3, style: .continuous)
+                    .fill(color.color.opacity(0.7))
+                    .frame(width: size * 0.6, height: size * 0.6)
+            }
+        }
+        .overlay(
+            RoundedRectangle(cornerRadius: 4, style: .continuous)
+                .stroke(isHighlighted ? Color("AccentGreen") : Color.white.opacity(0.2), lineWidth: isHighlighted ? 1.5 : 0.5)
+        )
+    }
+
+    private var backgroundColor: Color {
+        switch cellType {
+        case .empty:
+            return Color.white.opacity(0.1)
+        case .endpoint, .path:
+            return Color.white.opacity(0.05)
+        }
     }
 }
 
