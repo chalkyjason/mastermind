@@ -1069,7 +1069,7 @@ struct FlowConnectDemoView: View {
                     MiniFlowGridView(
                         cells: [
                             [.endpoint(.red), .path(.red), .endpoint(.red)],
-                            [.endpoint(.blue), .empty, .empty],
+                            [.endpoint(.blue), .path(.blue), .path(.blue)],
                             [.empty, .empty, .endpoint(.blue)]
                         ],
                         paths: []
