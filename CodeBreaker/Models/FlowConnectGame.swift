@@ -277,15 +277,11 @@ class FlowConnectGame: ObservableObject {
             }
         }
 
-        // Check if grid is filled (optional for some variants)
-        let filledPercentage = calculateFilledPercentage()
-
-        if filledPercentage >= 0.95 { // Allow small tolerance
-            let stars = calculateStars()
-            gameState = .won(moves: moveCount, stars: stars)
-            HapticManager.shared.correctGuess()
-            SoundManager.shared.correctGuess()
-        }
+        // All flows connected = win!
+        let stars = calculateStars()
+        gameState = .won(moves: moveCount, stars: stars)
+        HapticManager.shared.correctGuess()
+        SoundManager.shared.correctGuess()
     }
 
     private func isConnected(_ start: GridPosition, _ end: GridPosition, color: FlowColor) -> Bool {
