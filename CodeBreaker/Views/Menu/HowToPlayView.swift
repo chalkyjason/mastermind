@@ -1014,11 +1014,10 @@ struct FlowConnectDemoView: View {
             // Unconnected grid
             MiniFlowGridView(
                 cells: [
-                    [.endpoint(.red), .empty, .empty],
-                    [.empty, .endpoint(.blue), .empty],
-                    [.endpoint(.red), .empty, .endpoint(.blue)]
-                ],
-                paths: []
+                    [FlowDemoCellType.endpoint(.red), .empty, .empty],
+                    [.empty, FlowDemoCellType.endpoint(.blue), .empty],
+                    [FlowDemoCellType.endpoint(.red), .empty, FlowDemoCellType.endpoint(.blue)]
+                ]
             )
 
             Image(systemName: "arrow.right")
@@ -1028,13 +1027,9 @@ struct FlowConnectDemoView: View {
             // Connected grid
             MiniFlowGridView(
                 cells: [
-                    [.endpoint(.red), .path(.red), .path(.red)],
-                    [.empty, .endpoint(.blue), .path(.red)],
-                    [.endpoint(.red), .path(.blue), .endpoint(.blue)]
-                ],
-                paths: [
-                    ([(0, 0), (0, 1), (0, 2), (1, 2), (2, 0)], FlowColor.red),
-                    ([(1, 1), (2, 1), (2, 2)], FlowColor.blue)
+                    [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.path(.red)],
+                    [.empty, FlowDemoCellType.endpoint(.blue), FlowDemoCellType.path(.red)],
+                    [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.blue), FlowDemoCellType.endpoint(.blue)]
                 ],
                 isComplete: true
             )
@@ -1048,13 +1043,11 @@ struct FlowConnectDemoView: View {
             VStack(spacing: 4) {
                 MiniFlowGridView(
                     cells: [
-                        [.endpoint(.red), .empty, .empty],
-                        [.empty, .empty, .empty],
-                        [.empty, .empty, .endpoint(.red)]
+                        [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.path(.red)],
+                        [.empty, .empty, FlowDemoCellType.path(.red)],
+                        [.empty, .empty, FlowDemoCellType.endpoint(.red)]
                     ],
-                    paths: [],
-                    highlightedPath: [(0, 0), (1, 0), (2, 0), (2, 1), (2, 2)],
-                    highlightColor: .red
+                    highlightedPath: [(0, 0), (0, 1), (0, 2), (1, 2), (2, 2)]
                 )
             }
 
@@ -1078,11 +1071,10 @@ struct FlowConnectDemoView: View {
                 VStack(spacing: 4) {
                     MiniFlowGridView(
                         cells: [
-                            [.endpoint(.red), .path(.red), .endpoint(.red)],
-                            [.endpoint(.blue), .path(.blue), .path(.blue)],
-                            [.empty, .empty, .endpoint(.blue)]
-                        ],
-                        paths: []
+                            [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.endpoint(.red)],
+                            [FlowDemoCellType.endpoint(.blue), FlowDemoCellType.path(.blue), FlowDemoCellType.path(.blue)],
+                            [.empty, .empty, FlowDemoCellType.endpoint(.blue)]
+                        ]
                     )
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundColor(Color("AccentGreen"))
@@ -1095,11 +1087,10 @@ struct FlowConnectDemoView: View {
                 VStack(spacing: 4) {
                     MiniFlowGridView(
                         cells: [
-                            [.endpoint(.red), .path(.red), .endpoint(.red)],
-                            [.endpoint(.blue), .path(.blue), .empty],
-                            [.empty, .empty, .endpoint(.blue)]
+                            [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.endpoint(.red)],
+                            [FlowDemoCellType.endpoint(.blue), FlowDemoCellType.path(.blue), .empty],
+                            [.empty, .empty, FlowDemoCellType.endpoint(.blue)]
                         ],
-                        paths: [],
                         showError: true
                     )
                     Image(systemName: "xmark.circle.fill")
@@ -1120,11 +1111,10 @@ struct FlowConnectDemoView: View {
             VStack(spacing: 4) {
                 MiniFlowGridView(
                     cells: [
-                        [.endpoint(.red), .path(.red), .endpoint(.red)],
-                        [.endpoint(.blue), .empty, .empty],
-                        [.path(.blue), .path(.blue), .endpoint(.blue)]
+                        [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.endpoint(.red)],
+                        [FlowDemoCellType.endpoint(.blue), .empty, .empty],
+                        [FlowDemoCellType.path(.blue), FlowDemoCellType.path(.blue), FlowDemoCellType.endpoint(.blue)]
                     ],
-                    paths: [],
                     showError: true
                 )
                 Text("Gaps!")
@@ -1138,11 +1128,10 @@ struct FlowConnectDemoView: View {
             VStack(spacing: 4) {
                 MiniFlowGridView(
                     cells: [
-                        [.endpoint(.red), .path(.red), .empty],
-                        [.endpoint(.blue), .path(.red), .endpoint(.red)],
-                        [.path(.blue), .path(.blue), .endpoint(.blue)]
+                        [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.path(.red)],
+                        [FlowDemoCellType.endpoint(.blue), FlowDemoCellType.path(.red), FlowDemoCellType.endpoint(.red)],
+                        [FlowDemoCellType.path(.blue), FlowDemoCellType.path(.blue), FlowDemoCellType.endpoint(.blue)]
                     ],
-                    paths: [],
                     isComplete: true
                 )
                 Text("Full!")
@@ -1158,11 +1147,10 @@ struct FlowConnectDemoView: View {
         HStack(spacing: 12) {
             MiniFlowGridView(
                 cells: [
-                    [.endpoint(.red), .path(.red), .path(.red)],
-                    [.path(.green), .path(.red), .endpoint(.red)],
-                    [.endpoint(.green), .path(.green), .endpoint(.blue)]
+                    [FlowDemoCellType.endpoint(.red), FlowDemoCellType.path(.red), FlowDemoCellType.path(.red)],
+                    [FlowDemoCellType.path(.green), FlowDemoCellType.path(.red), FlowDemoCellType.endpoint(.red)],
+                    [FlowDemoCellType.endpoint(.green), FlowDemoCellType.path(.green), FlowDemoCellType.endpoint(.blue)]
                 ],
-                paths: [],
                 isComplete: true
             )
 
@@ -1193,7 +1181,7 @@ enum FlowDemoCellType {
 // MARK: - Mini Flow Grid View
 
 struct MiniFlowGridView: View {
-    let cells: [[FlowCellType]]
+    let cells: [[FlowDemoCellType]]
     var isComplete: Bool = false
     var showError: Bool = false
     var highlightedPath: [(Int, Int)]? = nil

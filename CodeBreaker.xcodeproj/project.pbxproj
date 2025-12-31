@@ -7,19 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		C1000004 /* KnuthSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000004 /* KnuthSolver.swift */; };
-		C1000005 /* TimeAttackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000005 /* TimeAttackView.swift */; };
-		D1000001 /* BinaryGridGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000001 /* BinaryGridGame.swift */; };
-		D1000002 /* BinaryGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000002 /* BinaryGridView.swift */; };
-		D1000003 /* BinaryGridLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000003 /* BinaryGridLevelSelectView.swift */; };
-		D1000004 /* GameModeSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000004 /* GameModeSelectView.swift */; };
 		7921ADE02EEB043D001B8143 /* LivesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADDF2EEB043D001B8143 /* LivesManager.swift */; };
 		7921ADE22EEB04F6001B8143 /* SoundManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE12EEB04F6001B8143 /* SoundManager.swift */; };
 		7921ADE42EEB0500001B8143 /* AdManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE32EEB0500001B8143 /* AdManager.swift */; };
 		7921ADE62EEB0510001B8143 /* NotificationManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7921ADE52EEB0510001B8143 /* NotificationManager.swift */; };
-		C1000001 /* BallSortGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001 /* BallSortGame.swift */; };
-		C1000002 /* BallSortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002 /* BallSortView.swift */; };
-		C1000003 /* BallSortLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003 /* BallSortLevelSelectView.swift */; };
 		A1000001 /* CodeBreakerApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000001 /* CodeBreakerApp.swift */; };
 		A1000002 /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000002 /* ContentView.swift */; };
 		A1000003 /* GameTypes.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000003 /* GameTypes.swift */; };
@@ -35,6 +26,15 @@
 		A1000013 /* HowToPlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A2000013 /* HowToPlayView.swift */; };
 		A1000014 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = A2000014 /* Assets.xcassets */; };
 		B1000001 /* GoogleMobileAds in Frameworks */ = {isa = PBXBuildFile; productRef = B2000001 /* GoogleMobileAds */; };
+		C1000001 /* BallSortGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000001 /* BallSortGame.swift */; };
+		C1000002 /* BallSortView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000002 /* BallSortView.swift */; };
+		C1000003 /* BallSortLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000003 /* BallSortLevelSelectView.swift */; };
+		C1000004 /* KnuthSolver.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000004 /* KnuthSolver.swift */; };
+		C1000005 /* TimeAttackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C2000005 /* TimeAttackView.swift */; };
+		D1000001 /* BinaryGridGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000001 /* BinaryGridGame.swift */; };
+		D1000002 /* BinaryGridView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000002 /* BinaryGridView.swift */; };
+		D1000003 /* BinaryGridLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000003 /* BinaryGridLevelSelectView.swift */; };
+		D1000004 /* GameModeSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2000004 /* GameModeSelectView.swift */; };
 		E1000001 /* FlowConnectGame.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2000001 /* FlowConnectGame.swift */; };
 		E1000002 /* FlowConnectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2000002 /* FlowConnectView.swift */; };
 		E1000003 /* FlowConnectLevelSelectView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E2000003 /* FlowConnectLevelSelectView.swift */; };
@@ -45,15 +45,6 @@
 		7921ADE12EEB04F6001B8143 /* SoundManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SoundManager.swift; sourceTree = "<group>"; };
 		7921ADE32EEB0500001B8143 /* AdManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdManager.swift; sourceTree = "<group>"; };
 		7921ADE52EEB0510001B8143 /* NotificationManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationManager.swift; sourceTree = "<group>"; };
-		C2000001 /* BallSortGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortGame.swift; sourceTree = "<group>"; };
-		C2000002 /* BallSortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortView.swift; sourceTree = "<group>"; };
-		C2000003 /* BallSortLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortLevelSelectView.swift; sourceTree = "<group>"; };
-		C2000004 /* KnuthSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnuthSolver.swift; sourceTree = "<group>"; };
-		C2000005 /* TimeAttackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAttackView.swift; sourceTree = "<group>"; };
-		D2000001 /* BinaryGridGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridGame.swift; sourceTree = "<group>"; };
-		D2000002 /* BinaryGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridView.swift; sourceTree = "<group>"; };
-		D2000003 /* BinaryGridLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridLevelSelectView.swift; sourceTree = "<group>"; };
-		D2000004 /* GameModeSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModeSelectView.swift; sourceTree = "<group>"; };
 		79D5DE2C2EF08567004BCA5D /* CodeBreaker.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = CodeBreaker.entitlements; sourceTree = "<group>"; };
 		A2000001 /* CodeBreakerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodeBreakerApp.swift; sourceTree = "<group>"; };
 		A2000002 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
@@ -70,6 +61,15 @@
 		A2000013 /* HowToPlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HowToPlayView.swift; sourceTree = "<group>"; };
 		A2000014 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A3000001 /* CodeBreaker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = CodeBreaker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		C2000001 /* BallSortGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortGame.swift; sourceTree = "<group>"; };
+		C2000002 /* BallSortView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortView.swift; sourceTree = "<group>"; };
+		C2000003 /* BallSortLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BallSortLevelSelectView.swift; sourceTree = "<group>"; };
+		C2000004 /* KnuthSolver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KnuthSolver.swift; sourceTree = "<group>"; };
+		C2000005 /* TimeAttackView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAttackView.swift; sourceTree = "<group>"; };
+		D2000001 /* BinaryGridGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridGame.swift; sourceTree = "<group>"; };
+		D2000002 /* BinaryGridView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridView.swift; sourceTree = "<group>"; };
+		D2000003 /* BinaryGridLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BinaryGridLevelSelectView.swift; sourceTree = "<group>"; };
+		D2000004 /* GameModeSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GameModeSelectView.swift; sourceTree = "<group>"; };
 		E2000001 /* FlowConnectGame.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowConnectGame.swift; sourceTree = "<group>"; };
 		E2000002 /* FlowConnectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowConnectView.swift; sourceTree = "<group>"; };
 		E2000003 /* FlowConnectLevelSelectView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FlowConnectLevelSelectView.swift; sourceTree = "<group>"; };
@@ -149,24 +149,6 @@
 			path = Views;
 			sourceTree = "<group>";
 		};
-		D5000001 /* BinaryGrid */ = {
-			isa = PBXGroup;
-			children = (
-				D2000002 /* BinaryGridView.swift */,
-				D2000003 /* BinaryGridLevelSelectView.swift */,
-			);
-			path = BinaryGrid;
-			sourceTree = "<group>";
-		};
-		E5000001 /* FlowConnect */ = {
-			isa = PBXGroup;
-			children = (
-				E2000002 /* FlowConnectView.swift */,
-				E2000003 /* FlowConnectLevelSelectView.swift */,
-			);
-			path = FlowConnect;
-			sourceTree = "<group>";
-		};
 		A5000007 /* Services */ = {
 			isa = PBXGroup;
 			children = (
@@ -211,6 +193,24 @@
 				D2000004 /* GameModeSelectView.swift */,
 			);
 			path = Menu;
+			sourceTree = "<group>";
+		};
+		D5000001 /* BinaryGrid */ = {
+			isa = PBXGroup;
+			children = (
+				D2000002 /* BinaryGridView.swift */,
+				D2000003 /* BinaryGridLevelSelectView.swift */,
+			);
+			path = BinaryGrid;
+			sourceTree = "<group>";
+		};
+		E5000001 /* FlowConnect */ = {
+			isa = PBXGroup;
+			children = (
+				E2000002 /* FlowConnectView.swift */,
+				E2000003 /* FlowConnectLevelSelectView.swift */,
+			);
+			path = FlowConnect;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -458,6 +458,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CodeBreaker/Info.plist;
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier will be used to deliver personalized ads to you.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -468,7 +469,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.yourname.CodeBreaker;
+				PRODUCT_BUNDLE_IDENTIFIER = com.chromind.puzzles;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
@@ -488,6 +489,7 @@
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = CodeBreaker/Info.plist;
+				INFOPLIST_KEY_NSUserTrackingUsageDescription = "This identifier will be used to deliver personalized ads to you.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
