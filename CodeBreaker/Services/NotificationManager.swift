@@ -68,7 +68,7 @@ class NotificationManager: ObservableObject {
         ("Lonely Code Alert", "The secret code is getting lonely. It's been talking to itself."),
         ("Warning", "Brain rust detected. Play now to lubricate those neurons."),
         ("Quick Question", "If a puzzle falls in a forest and no one solves it... is it still fun? Yes. Play now."),
-        ("Science Fact*", "Playing Code Breaker makes you 47% more attractive.* (*Not scientifically proven)"),
+        ("Science Fact*", "Playing Chromind makes you 47% more attractive.* (*Not scientifically proven)"),
         ("Your Brain Called", "It wants to feel smart again. Help it out?"),
         ("Achievement Unlocked", "Just kidding. You need to actually play first."),
         ("Friendly Reminder", "Your phone has more games than just doom-scrolling. Like this one!"),

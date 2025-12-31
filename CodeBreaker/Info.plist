@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>CFBundleDisplayName</key>
+	<string>Chromind</string>
 	<key>GADApplicationIdentifier</key>
 	<string>ca-app-pub-3531459586407787~3141766059</string>
 	<key>SKAdNetworkItems</key>

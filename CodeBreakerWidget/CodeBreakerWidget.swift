@@ -200,7 +200,7 @@ struct MediumWidgetView: View {
                         }
                     }
 
-                    Text("Code Breaker")
+                    Text("Chromind")
                         .font(.caption2)
                         .foregroundColor(.white.opacity(0.5))
                 }
@@ -262,7 +262,7 @@ struct CodeBreakerWidget: Widget {
         StaticConfiguration(kind: kind, provider: Provider()) { entry in
             CodeBreakerWidgetEntryView(entry: entry)
         }
-        .configurationDisplayName("Code Breaker")
+        .configurationDisplayName("Chromind")
         .description("Track your streak and daily challenge status.")
         .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
