@@ -20,24 +20,24 @@ class GameCenterManager: ObservableObject {
 
     enum LeaderboardID: String, CaseIterable {
         // Overall
-        case totalStars = "com.puzzlemaster.totalstars"
-        case longestStreak = "com.puzzlemaster.longeststreak"
+        case totalStars = "com.chromind.totalstars"
+        case longestStreak = "com.chromind.longeststreak"
 
         // Code Breaker
-        case codeBreakerStars = "com.puzzlemaster.codebreaker.stars"
-        case codeBreakerLevels = "com.puzzlemaster.codebreaker.levels"
+        case codeBreakerStars = "com.chromind.codebreaker.stars"
+        case codeBreakerLevels = "com.chromind.codebreaker.levels"
 
         // Ball Sort
-        case ballSortStars = "com.puzzlemaster.ballsort.stars"
-        case ballSortLevels = "com.puzzlemaster.ballsort.levels"
+        case ballSortStars = "com.chromind.ballsort.stars"
+        case ballSortLevels = "com.chromind.ballsort.levels"
 
         // Binary Grid
-        case binaryGridStars = "com.puzzlemaster.binarygrid.stars"
-        case binaryGridLevels = "com.puzzlemaster.binarygrid.levels"
+        case binaryGridStars = "com.chromind.binarygrid.stars"
+        case binaryGridLevels = "com.chromind.binarygrid.levels"
 
         // Flow Connect
-        case flowConnectStars = "com.puzzlemaster.flowconnect.stars"
-        case flowConnectLevels = "com.puzzlemaster.flowconnect.levels"
+        case flowConnectStars = "com.chromind.flowconnect.stars"
+        case flowConnectLevels = "com.chromind.flowconnect.levels"
 
         var displayName: String {
             switch self {
@@ -60,56 +60,56 @@ class GameCenterManager: ObservableObject {
 
     enum AchievementID: String, CaseIterable {
         // Getting Started
-        case firstWin = "com.puzzlemaster.firstwin"
-        case tryAllGames = "com.puzzlemaster.tryallgames"
+        case firstWin = "com.chromind.firstwin"
+        case tryAllGames = "com.chromind.tryallgames"
 
         // Code Breaker Progression
-        case cbCompleteTutorial = "com.puzzlemaster.cb.tutorial"
-        case cbCompleteBeginner = "com.puzzlemaster.cb.beginner"
-        case cbCompleteIntermediate = "com.puzzlemaster.cb.intermediate"
-        case cbCompleteAdvanced = "com.puzzlemaster.cb.advanced"
-        case cbCompleteExpert = "com.puzzlemaster.cb.expert"
-        case cbCompleteMaster = "com.puzzlemaster.cb.master"
+        case cbCompleteTutorial = "com.chromind.cb.tutorial"
+        case cbCompleteBeginner = "com.chromind.cb.beginner"
+        case cbCompleteIntermediate = "com.chromind.cb.intermediate"
+        case cbCompleteAdvanced = "com.chromind.cb.advanced"
+        case cbCompleteExpert = "com.chromind.cb.expert"
+        case cbCompleteMaster = "com.chromind.cb.master"
 
         // Ball Sort Progression
-        case bsComplete10 = "com.puzzlemaster.bs.level10"
-        case bsComplete50 = "com.puzzlemaster.bs.level50"
-        case bsComplete100 = "com.puzzlemaster.bs.level100"
+        case bsComplete10 = "com.chromind.bs.level10"
+        case bsComplete50 = "com.chromind.bs.level50"
+        case bsComplete100 = "com.chromind.bs.level100"
 
         // Binary Grid Progression
-        case bgComplete10 = "com.puzzlemaster.bg.level10"
-        case bgComplete50 = "com.puzzlemaster.bg.level50"
-        case bgComplete100 = "com.puzzlemaster.bg.level100"
+        case bgComplete10 = "com.chromind.bg.level10"
+        case bgComplete50 = "com.chromind.bg.level50"
+        case bgComplete100 = "com.chromind.bg.level100"
 
         // Flow Connect Progression
-        case fcComplete10 = "com.puzzlemaster.fc.level10"
-        case fcComplete50 = "com.puzzlemaster.fc.level50"
-        case fcComplete100 = "com.puzzlemaster.fc.level100"
+        case fcComplete10 = "com.chromind.fc.level10"
+        case fcComplete50 = "com.chromind.fc.level50"
+        case fcComplete100 = "com.chromind.fc.level100"
 
         // Star Milestones (combined across all games)
-        case stars50 = "com.puzzlemaster.stars50"
-        case stars100 = "com.puzzlemaster.stars100"
-        case stars250 = "com.puzzlemaster.stars250"
-        case stars500 = "com.puzzlemaster.stars500"
-        case stars1000 = "com.puzzlemaster.stars1000"
+        case stars50 = "com.chromind.stars50"
+        case stars100 = "com.chromind.stars100"
+        case stars250 = "com.chromind.stars250"
+        case stars500 = "com.chromind.stars500"
+        case stars1000 = "com.chromind.stars1000"
 
         // Streak Achievements
-        case streak3 = "com.puzzlemaster.streak3"
-        case streak7 = "com.puzzlemaster.streak7"
-        case streak14 = "com.puzzlemaster.streak14"
-        case streak30 = "com.puzzlemaster.streak30"
-        case streak100 = "com.puzzlemaster.streak100"
+        case streak3 = "com.chromind.streak3"
+        case streak7 = "com.chromind.streak7"
+        case streak14 = "com.chromind.streak14"
+        case streak30 = "com.chromind.streak30"
+        case streak100 = "com.chromind.streak100"
 
         // Perfect Performance
-        case perfectCodeBreaker = "com.puzzlemaster.cb.perfect"     // 3 stars on first try
-        case perfectBallSort = "com.puzzlemaster.bs.perfect"        // Minimum moves
-        case perfectBinaryGrid = "com.puzzlemaster.bg.perfect"      // Under 30 seconds
-        case perfectFlowConnect = "com.puzzlemaster.fc.perfect"     // First try connection
+        case perfectCodeBreaker = "com.chromind.cb.perfect"     // 3 stars on first try
+        case perfectBallSort = "com.chromind.bs.perfect"        // Minimum moves
+        case perfectBinaryGrid = "com.chromind.bg.perfect"      // Under 30 seconds
+        case perfectFlowConnect = "com.chromind.fc.perfect"     // First try connection
 
         // Dedication
-        case dailyPlayer = "com.puzzlemaster.daily7"                // Play 7 days in a row
-        case weekendWarrior = "com.puzzlemaster.weekend"            // Play on Saturday and Sunday
-        case puzzleMaster = "com.puzzlemaster.master"               // Complete 100 levels in any game
+        case dailyPlayer = "com.chromind.daily7"                // Play 7 days in a row
+        case weekendWarrior = "com.chromind.weekend"            // Play on Saturday and Sunday
+        case puzzleMaster = "com.chromind.master"               // Complete 100 levels in any game
 
         var displayName: String {
             switch self {

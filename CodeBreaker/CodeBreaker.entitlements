@@ -6,7 +6,7 @@
 	<true/>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.com.codebreaker.shared</string>
+		<string>group.com.chromind.shared</string>
 	</array>
 </dict>
 </plist>
