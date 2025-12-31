@@ -16,6 +16,15 @@ enum GameMode: String, CaseIterable {
         case .flowConnect: return "point.topleft.down.to.point.bottomright.curvepath"
         }
     }
+
+    var shortName: String {
+        switch self {
+        case .codeBreaker: return "Code"
+        case .ballSort: return "Ball Sort"
+        case .binaryGrid: return "Binary"
+        case .flowConnect: return "Flow"
+        }
+    }
 }
 
 struct HowToPlayView: View {
@@ -192,14 +201,15 @@ struct HowToPlayView: View {
                                     currentPage = 0
                                 }
                             }) {
-                                HStack(spacing: 8) {
+                                VStack(spacing: 4) {
                                     Image(systemName: mode.icon)
-                                        .font(.subheadline.weight(.semibold))
-                                    Text(mode.rawValue)
-                                        .font(.subheadline.weight(.semibold))
+                                        .font(.title3.weight(.semibold))
+                                    Text(mode.shortName)
+                                        .font(.caption2.weight(.semibold))
+                                        .lineLimit(1)
                                 }
                                 .foregroundColor(selectedMode == mode ? .white : .white.opacity(0.5))
-                                .padding(.vertical, 12)
+                                .padding(.vertical, 10)
                                 .frame(maxWidth: .infinity)
                                 .background(
                                     selectedMode == mode ?
@@ -1174,7 +1184,7 @@ struct FlowConnectDemoView: View {
 
 // MARK: - Flow Cell Type (for demos)
 
-enum FlowCellType {
+enum FlowDemoCellType {
     case empty
     case endpoint(FlowColor)
     case path(FlowColor)
@@ -1227,7 +1237,7 @@ struct MiniFlowGridView: View {
 // MARK: - Mini Flow Cell View
 
 struct MiniFlowCellView: View {
-    let cellType: FlowCellType
+    let cellType: FlowDemoCellType
     let size: CGFloat
     var isHighlighted: Bool = false
 
