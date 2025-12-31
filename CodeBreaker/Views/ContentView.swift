@@ -22,7 +22,7 @@ struct ContentView: View {
 
                     // Logo/Title
                     VStack(spacing: 8) {
-                        Text("PUZZLE")
+                        Text("CHRO")
                             .font(.system(size: 64, weight: .black, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
@@ -31,7 +31,7 @@ struct ContentView: View {
                                     endPoint: .bottom
                                 )
                             )
-                        Text("MASTER")
+                        Text("MIND")
                             .font(.system(size: 64, weight: .black, design: .rounded))
                             .foregroundStyle(
                                 LinearGradient(
